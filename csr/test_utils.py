@@ -3,12 +3,17 @@ CSR test utilities.
 """
 
 import numpy as np
+import scipy.sparse as sps
 
 from hypothesis import settings, HealthCheck
 import hypothesis.strategies as st
 import hypothesis.extra.numpy as nph
 
 from .csr import CSR
+
+
+def fractions(**kwargs):
+    return st.floats(0, 1, **kwargs)
 
 
 @st.composite
@@ -40,6 +45,15 @@ def csrs(draw, nrows=None, ncols=None, nnz=None, values=None):
     else:
         vals = None
     return CSR.from_coo(rows, cols, vals, (nrows, ncols))
+
+
+@st.composite
+def sparse_matrices(draw, max_shape=(1000, 1000), density=fractions(exclude_min=True), format='csr'):
+    ubr, ubc = max_shape
+    rows = draw(st.integers(1, ubr))
+    cols = draw(st.integers(1, ubc))
+    dens = draw(density)
+    return sps.random(rows, cols, dens, format=format)
 
 
 def matrices(max_shape=(100, 100), dtype='f8'):

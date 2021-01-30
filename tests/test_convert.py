@@ -2,7 +2,7 @@ import numpy as np
 import scipy.sparse as sps
 
 from csr import CSR
-from csr.test_utils import csrs, csr_slow
+from csr.test_utils import csrs, csr_slow, sparse_matrices
 
 from pytest import mark, approx, raises
 from hypothesis import given, assume, settings, HealthCheck
@@ -31,6 +31,23 @@ def test_csr_from_sps(copy):
     assert isinstance(csr.rowptrs, np.ndarray)
     assert isinstance(csr.colinds, np.ndarray)
     assert isinstance(csr.values, np.ndarray)
+
+
+@given(sparse_matrices(format='csr'), st.booleans())
+def test_csr_from_sps_csr(smat, copy):
+    "Test creating a CSR from a SciPy CSR matrix"
+    csr = CSR.from_scipy(smat, copy=copy)
+    assert csr.nnz == smat.nnz
+    assert csr.nrows == smat.shape[0]
+    assert csr.ncols == smat.shape[1]
+
+    assert all(csr.rowptrs == smat.indptr)
+    assert all(csr.colinds == smat.indices)
+    assert all(csr.values == smat.data)
+    assert isinstance(csr.rowptrs, np.ndarray)
+    assert isinstance(csr.colinds, np.ndarray)
+    if csr.nnz > 0:
+        assert isinstance(csr.values, np.ndarray)
 
 
 def test_csr_is_numpy_compatible():
