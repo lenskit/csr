@@ -2,7 +2,7 @@ import numpy as np
 import scipy.sparse as sps
 
 from csr import CSR
-from csr.test_utils import csrs, csr_slow
+from csr.test_utils import csrs, csr_slow, matrices
 
 from pytest import mark, approx, raises
 from hypothesis import given, assume, settings, HealthCheck
@@ -114,17 +114,19 @@ def test_csr_sparse_row():
     assert all(csr.row_vs(3) == np.array([3], dtype=np.float_))
 
 
-def test_csr_row_nnzs():
-    # initialize sparse matrix
-    mat = np.random.randn(10, 5)
+@given(matrices())
+def test_csr_row_nnzs(mat):
+    nrows, ncols = mat.shape
+
+    # sparsify the matrix
     mat[mat <= 0] = 0
     smat = sps.csr_matrix(mat)
     # make sure it's sparse
-    assert smat.nnz == np.sum(mat > 0)
+    assume(smat.nnz == np.sum(mat > 0))
     csr = CSR.from_scipy(smat)
 
     nnzs = csr.row_nnzs()
     assert nnzs.sum() == csr.nnz
-    for i in range(10):
+    for i in range(nrows):
         row = mat[i, :]
         assert nnzs[i] == np.sum(row > 0)

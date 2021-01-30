@@ -42,4 +42,10 @@ def csrs(draw, nrows=None, ncols=None, nnz=None, values=None):
     return CSR.from_coo(rows, cols, vals, (nrows, ncols))
 
 
+def matrices(max_shape=(100, 100), dtype='f8'):
+    "Draw dense matrices"
+    ubr, ubc = max_shape
+    return nph.arrays(dtype, st.tuples(st.integers(1, ubr), st.integers(1, ubc)))
+
+
 csr_slow = settings(deadline=None, suppress_health_check=HealthCheck.all(), max_examples=15)
