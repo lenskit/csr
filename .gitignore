@@ -1,0 +1,7 @@
+/.hypothesis
+__pycache__
+*.pyc
+*.pyo
+*.log
+*.prof
+*.lprof
