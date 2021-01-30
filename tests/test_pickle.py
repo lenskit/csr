@@ -10,7 +10,7 @@ import hypothesis.strategies as st
 import hypothesis.extra.numpy as nph
 
 
-@csr_slow
+@csr_slow()
 @given(csrs())
 def test_csr_pickle(csr):
     data = pickle.dumps(csr)
@@ -27,7 +27,7 @@ def test_csr_pickle(csr):
         assert csr2.values is None
 
 
-@csr_slow
+@csr_slow()
 @given(csrs())
 def test_csr64_pickle(csr):
     csr = CSR(csr.nrows, csr.ncols, csr.nnz,

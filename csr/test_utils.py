@@ -62,4 +62,7 @@ def matrices(max_shape=(100, 100), dtype='f8'):
     return nph.arrays(dtype, st.tuples(st.integers(1, ubr), st.integers(1, ubc)))
 
 
-csr_slow = settings(deadline=None, suppress_health_check=HealthCheck.all(), max_examples=15)
+def csr_slow(divider=2):
+    dft = settings.default
+    return settings(dft, deadline=None, suppress_health_check=HealthCheck.all(),
+                    max_examples=dft.max_examples // divider)

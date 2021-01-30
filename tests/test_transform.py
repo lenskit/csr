@@ -9,7 +9,7 @@ import hypothesis.strategies as st
 import hypothesis.extra.numpy as nph
 
 
-@csr_slow
+@csr_slow()
 @given(sparse_matrices())
 def test_mean_center(spm):
     assume(spm.nnz >= 10)
@@ -28,9 +28,10 @@ def test_mean_center(spm):
             assert vs + m2[i] == approx(spr[0, csr.row_cs(i)])
 
 
-@csr_slow
+@csr_slow()
 @given(sparse_matrices())
 def test_unit_norm(spm):
+    assume(spm.nnz >= 10)
     csr = CSR.from_scipy(spm)
 
     m2 = csr.normalize_rows('unit')
@@ -43,7 +44,7 @@ def test_unit_norm(spm):
             assert vs * m2[i] == approx(spm.getrow(i).toarray()[0, csr.row_cs(i)])
 
 
-@csr_slow
+@csr_slow()
 @given(csrs(values=True))
 def test_filter(csr):
     assume(not np.all(csr.values <= 0))  # we have to have at least one to retain
