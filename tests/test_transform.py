@@ -1,7 +1,7 @@
 import numpy as np
 
 from csr import CSR
-from csr.test_utils import csrs, csr_slow
+from csr.test_utils import csrs, csr_slow, sparse_matrices
 
 from pytest import mark, approx, raises
 from hypothesis import given, assume, settings, HealthCheck
@@ -10,25 +10,28 @@ import hypothesis.extra.numpy as nph
 
 
 @csr_slow
-@given(csrs(values=True))
-def test_mean_center(csr):
-    assume(csr.nnz >= 10)
-    spm = csr.to_scipy().copy()
+@given(sparse_matrices())
+def test_mean_center(spm):
+    assume(spm.nnz >= 10)
+    csr = CSR.from_scipy(spm)
 
     m2 = csr.normalize_rows('center')
     assert len(m2) == csr.nrows
+    rnnz = csr.row_nnzs()
 
     for i in range(csr.nrows):
         vs = csr.row_vs(i)
-        if len(vs) > 0:
+        spr = spm[i, :].toarray()
+        if rnnz[i] > 0:
+            assert m2[i] == approx(np.sum(spr) / rnnz[i])
             assert np.mean(vs) == approx(0.0)
-            assert vs + m2[i] == approx(spm.getrow(i).toarray()[0, csr.row_cs(i)])
+            assert vs + m2[i] == approx(spr[0, csr.row_cs(i)])
 
 
 @csr_slow
-@given(csrs(values=True))
-def test_unit_norm(csr):
-    spm = csr.to_scipy().copy()
+@given(sparse_matrices())
+def test_unit_norm(spm):
+    csr = CSR.from_scipy(spm)
 
     m2 = csr.normalize_rows('unit')
     assert len(m2) == csr.nrows
