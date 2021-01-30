@@ -1,0 +1,17 @@
+name: csr-mkl
+channels:
+- conda-forge
+dependencies:
+- python >=3.6
+- numba
+- numpy
+- scipy
+- flake8
+- rstcheck
+- pytest
+- pytest-doctestplus
+- hypothesis
+- cffi
+- mkl
+- mkl-devel
+- libblas=*=*mkl

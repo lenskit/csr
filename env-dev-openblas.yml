@@ -1,0 +1,13 @@
+name: csr
+channels:
+- conda-forge
+dependencies:
+- python >=3.6
+- numba
+- numpy
+- scipy
+- pytest
+- pytest-doctestplus
+- hypothesis
+- cffi
+- libblas=*=*openblas
