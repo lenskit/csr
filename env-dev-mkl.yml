@@ -10,6 +10,7 @@ dependencies:
 - rstcheck
 - pytest
 - pytest-doctestplus
+- pytest-cov
 - hypothesis
 - cffi
 - mkl

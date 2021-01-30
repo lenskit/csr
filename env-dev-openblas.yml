@@ -8,6 +8,6 @@ dependencies:
 - scipy
 - pytest
 - pytest-doctestplus
+- pytest-cov
 - hypothesis
-- cffi
 - libblas=*=*openblas
