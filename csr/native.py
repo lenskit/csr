@@ -23,7 +23,7 @@ _CSR = jitclass({
     'nnz': n.intc,
     'rowptrs': n.intc[::1],
     'colinds': n.intc[::1],
-    'values': n.float64[::1]
+    'values': n.optional(n.float64[::1])
 })(_CSR)
 _CSR64 = jitclass({
     'nrows': n.intc,
@@ -31,7 +31,7 @@ _CSR64 = jitclass({
     'nnz': n.int64,
     'rowptrs': n.int64[::1],
     'colinds': n.intc[::1],
-    'values': n.float64[::1]
+    'values': n.optional(n.float64[::1])
 })(_CSR64)
 
 

@@ -25,9 +25,6 @@ class _CSR:
     """
     Internal implementation class for :py:class:`CSR`. If you work with CSRs from Numba,
     you will use a :func:`numba.jitclass`-ed version of this.
-
-    Note that the ``values`` array is always present (unlike the Python shim), but is
-    zero-length if no values are present.  This eases Numba type-checking.
     """
     def __init__(self, nrows, ncols, nnz, ptrs, inds, vals):
         self.nrows = nrows
@@ -35,10 +32,7 @@ class _CSR:
         self.nnz = nnz
         self.rowptrs = ptrs
         self.colinds = inds
-        if vals is not None:
-            self.values = vals
-        else:
-            self.values = np.zeros(0)
+        self.values = vals
 
     def row(self, row):
         sp = self.rowptrs[row]
@@ -46,7 +40,7 @@ class _CSR:
 
         v = np.zeros(self.ncols)
         cols = self.colinds[sp:ep]
-        if self.values.size == 0:
+        if self.values is None:
             v[cols] = 1
         else:
             v[cols] = self.values[sp:ep]
@@ -68,7 +62,7 @@ class _CSR:
         sp = self.rowptrs[row]
         ep = self.rowptrs[row + 1]
 
-        if self.values.size == 0:
+        if self.values is None:
             return np.full(ep - sp, 1.0)
         else:
             return self.values[sp:ep]
@@ -264,7 +258,7 @@ class CSR:
             vs = np.require(vs, 'f8')
             self._N.values = vs
         else:
-            self._N.values = np.zeros(0)
+            self._N.values = None
 
     def subset_rows(self, begin, end):
         """
