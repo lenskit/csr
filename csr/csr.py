@@ -8,6 +8,7 @@ import numpy as np
 import scipy.sparse as sps
 
 from csr.kernels import releasing, active_kernel
+from csr import _csr_ops as _ops
 
 _logger = logging.getLogger(__name__)
 
@@ -17,8 +18,8 @@ __impl_mod = None
 def _impl_mod():
     global __impl_mod
     if __impl_mod is None:
-        from . import native
-        __impl_mod = native
+        from . import _csr_types
+        __impl_mod = _csr_types
     return __impl_mod
 
 
@@ -74,6 +75,11 @@ class _CSR:
             sp, ep = self.row_extent(i)
             ris[sp:ep] = i
         return ris
+
+    def transpose(self):
+        shape = self.nrows, self.ncols
+        rp, ci, vs = _ops._csr_transpose(shape, self.rowptrs, self.colinds, self.values)
+        return _CSR(self.ncols, self.nrows, self.nnz, rp, ci, vs)
 
 
 def _csr_delegate(name):
@@ -166,7 +172,7 @@ class CSR:
         rowptrs = np.zeros(nrows + 1, dtype=rpdtype)
         align = np.full(nnz, -1, dtype=rpdtype)
 
-        _impl_mod()._csr_align(rows, nrows, rowptrs, align)
+        _ops._csr_align(rows, nrows, rowptrs, align)
 
         cols = cols[align].copy()
         vals = vals[align].copy() if vals is not None else None
@@ -361,18 +367,9 @@ class CSR:
         Returns:
             CSR: the transpose of this matrix (or, equivalently, this matrix in CSC format).
         """
-        impl = _impl_mod()
-        n_rows = self.rowinds()
-        rows = self.colinds
-        n_vs = self.values if values else None
-        if n_vs is not None:
-            n_vs = n_vs.copy()
 
-        rowptrs = impl._csr_align_inplace((self.ncols, self.nrows), rows, n_rows, n_vs)
-        if self.rowptrs.dtype == np.int32:
-            rowptrs = rowptrs.astype(np.int32)
-
-        return CSR(self.ncols, self.nrows, self.nnz, rowptrs, n_rows, n_vs)
+        n2 = self.N.transpose()
+        return CSR(N=n2)
 
     def filter_nnzs(self, filt):
         """

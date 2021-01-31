@@ -1,42 +1,18 @@
 """
-Numba backend for matrix operations.
+Backend implementations of Numba operations.
 """
 
 import logging
 import numpy as np
-import numba as n
 from numba import njit
-try:
-    from numba.experimental import jitclass
-except ImportError:
-    from numba import jitclass
 
 from .array import swap
-from .csr import _CSR
 
 _log = logging.getLogger(__name__)
 
-_CSR64 = type('_CSR64', _CSR.__bases__, dict(_CSR.__dict__))
-_CSR = jitclass({
-    'nrows': n.intc,
-    'ncols': n.intc,
-    'nnz': n.intc,
-    'rowptrs': n.intc[::1],
-    'colinds': n.intc[::1],
-    'values': n.optional(n.float64[::1])
-})(_CSR)
-_CSR64 = jitclass({
-    'nrows': n.intc,
-    'ncols': n.intc,
-    'nnz': n.int64,
-    'rowptrs': n.int64[::1],
-    'colinds': n.intc[::1],
-    'values': n.optional(n.float64[::1])
-})(_CSR64)
-
 
 @njit(nogil=True)
-def _center_rows(csr: _CSR):
+def _center_rows(csr):
     means = np.zeros(csr.nrows)
     for i in range(csr.nrows):
         sp, ep = csr.row_extent(i)
@@ -51,7 +27,7 @@ def _center_rows(csr: _CSR):
 
 
 @njit(nogil=True)
-def _unit_rows(csr: _CSR):
+def _unit_rows(csr):
     norms = np.zeros(csr.nrows)
     for i in range(csr.nrows):
         sp, ep = csr.row_extent(i)
@@ -79,6 +55,47 @@ def _csr_align(rowinds, nrows, rowptrs, align):
         pos = rpos[row]
         align[pos] = i
         rpos[row] += 1
+
+
+@njit(nogil=True)
+def _csr_transpose(shape, arp, aci, avs):
+    nrows, ncols = shape
+    brp = np.zeros(ncols + 1, arp.dtype)
+    bci = np.zeros(len(aci), np.int32)
+    if avs is not None:
+        bvs = np.zeros(len(aci), np.float64)
+    else:
+        bvs = None
+
+    # count elements
+    for i in range(nrows):
+        ars = arp[i]
+        are = arp[i+1]
+        for jj in range(ars, are):
+            j = aci[jj]
+            brp[j+1] += 1
+
+    # convert to pointers
+    for j in range(ncols):
+        brp[j+1] = brp[j] + brp[j+1]
+
+    # construct results
+    for i in range(nrows):
+        ars = arp[i]
+        are = arp[i+1]
+        for jj in range(ars, are):
+            j = aci[jj]
+            bci[brp[j]] = i
+            if bvs is not None:
+                bvs[brp[j]] = avs[jj]
+            brp[j] += 1
+
+    # restore pointers
+    for i in range(ncols-1, 0, -1):
+        brp[i] = brp[i-1]
+    brp[0] = 0
+
+    return brp, bci, bvs
 
 
 @njit(nogil=True)
@@ -144,28 +161,3 @@ def _csr_align_inplace(shape, rows, cols, vals):
             rend = rps[row+1]
 
     return rps
-
-
-@njit
-def _empty_csr(nrows, ncols, sizes):
-    nnz = np.sum(sizes)
-    rowptrs = np.zeros(nrows + 1, dtype=np.intc)
-    for i in range(nrows):
-        rowptrs[i+1] = rowptrs[i] + sizes[i]
-    colinds = np.full(nnz, -1, dtype=np.intc)
-    values = np.full(nnz, np.nan)
-    return _CSR(nrows, ncols, nnz, rowptrs, colinds, values)
-
-
-@njit
-def _subset_rows(csr, begin, end):
-    st = csr.rowptrs[begin]
-    ed = csr.rowptrs[end]
-    rps = csr.rowptrs[begin:(end+1)] - st
-
-    cis = csr.colinds[st:ed]
-    if csr.values.size == 0:
-        vs = csr.values
-    else:
-        vs = csr.values[st:ed]
-    return _CSR(end - begin, csr.ncols, ed - st, rps, cis, vs)

@@ -2,7 +2,7 @@ import numpy as np
 import scipy.sparse as sps
 
 from csr import CSR
-from csr.test_utils import csrs, csr_slow
+from csr.test_utils import csrs, csr_slow, sparse_matrices
 
 from pytest import mark, approx, raises
 from hypothesis import given, assume, settings, HealthCheck
@@ -68,21 +68,17 @@ def test_csr_transpose_erow():
     assert np.all(s2.toarray() == smat.toarray())
 
 
-def test_csr_transpose_many():
-    for i in range(50):
-        nrows = np.random.randint(10, 1000)
-        ncols = np.random.randint(10, 500)
-        mat = np.random.randn(nrows, ncols)
-        mat[mat <= 0] = 0
-        smat = sps.csr_matrix(mat)
+@given(sparse_matrices())
+def test_csr_transpose_many(smat):
+    nrows, ncols = smat.shape
+    csr = CSR.from_scipy(smat)
+    csrt = csr.transpose()
+    assert csrt.nrows == ncols
+    assert csrt.ncols == nrows
+    assert csrt.nnz == csr.nnz
 
-        csr = CSR.from_scipy(smat)
-        csrt = csr.transpose()
-        assert csrt.nrows == ncols
-        assert csrt.ncols == nrows
+    s2 = csrt.to_scipy()
+    smat = smat.T.tocsr()
+    assert all(smat.indptr == csrt.rowptrs)
 
-        s2 = csrt.to_scipy()
-        smat = smat.T.tocsr()
-        assert all(smat.indptr == csrt.rowptrs)
-
-        assert np.all(s2.toarray() == smat.toarray())
+    assert np.all(s2.toarray() == smat.toarray())

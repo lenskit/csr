@@ -7,7 +7,7 @@ Matrix multiplication using the SMMP algorithm [SMMP]_.
 
 import numpy as np
 from numba import njit
-from csr.native import _CSR64
+from csr._csr_types import _CSR64
 
 
 @njit
