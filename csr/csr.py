@@ -7,6 +7,8 @@ import logging
 import numpy as np
 import scipy.sparse as sps
 
+from csr.kernels import releasing, active_kernel
+
 _logger = logging.getLogger(__name__)
 
 __impl_mod = None
@@ -35,8 +37,7 @@ class _CSR:
         self.values = vals
 
     def row(self, row):
-        sp = self.rowptrs[row]
-        ep = self.rowptrs[row + 1]
+        sp, ep = self.row_extent(row)
 
         v = np.zeros(self.ncols)
         cols = self.colinds[sp:ep]
@@ -238,10 +239,7 @@ class CSR:
 
     @property
     def values(self):
-        if self._N.values is not None and self._N.values.size:
-            return self._N.values
-        else:
-            return None
+        return self._N.values
 
     @values.setter
     def values(self, vs: np.ndarray):
@@ -403,6 +401,26 @@ class CSR:
         vs2 = None if vs is None else vs[filt]
 
         return CSR(self.nrows, self.ncols, nnz2, rps2, cis2, vs2)
+
+    def multiply(self, other):
+        """
+        Multiply this matrix by another.
+
+        Args:
+            other(CSR): the other matrix.
+
+        Returns
+            CSR: the product of the two matrices.
+        """
+
+        K = active_kernel()
+        with releasing(K.to_handle(self.N), K) as a_h:
+            with releasing(K.to_handle(other.N), K) as b_h:
+                c_h = K.mult_ab(a_h, b_h)
+                with releasing(c_h, K):
+                    cn = K.from_handle(c_h)
+
+        return CSR(N=cn)
 
     def __str__(self):
         return '<CSR {}x{} ({} nnz)>'.format(self.nrows, self.ncols, self.nnz)

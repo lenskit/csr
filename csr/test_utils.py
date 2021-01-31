@@ -56,6 +56,25 @@ def sparse_matrices(draw, max_shape=(1000, 1000), density=fractions(exclude_min=
     return sps.random(rows, cols, dens, format=format)
 
 
+@st.composite
+def mm_pairs(draw, max_shape=(100, 100, 100), as_csr=False):
+    "Draw multipliable pairs of matrices"
+    mr, mm, mc = max_shape
+    rows = draw(st.integers(1, mr))
+    mids = draw(st.integers(1, mm))
+    cols = draw(st.integers(1, mc))
+    dA = draw(st.floats(0.001, 0.9))
+    dB = draw(st.floats(0.001, 0.9))
+
+    A = sps.random(rows, mids, dA, format='csr')
+    B = sps.random(mids, cols, dB, format='csr')
+
+    if as_csr:
+        return CSR.from_scipy(A), CSR.from_scipy(B)
+    else:
+        return A, B
+
+
 def matrices(max_shape=(100, 100), dtype='f8'):
     "Draw dense matrices"
     ubr, ubc = max_shape
