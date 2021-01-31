@@ -6,6 +6,7 @@ import numpy as np
 from numba import njit
 from csr.native import _CSR64
 
+
 @njit
 def mult_ab(a_h, b_h):
     """
