@@ -1,5 +1,8 @@
 """
-Matrix multiplication using the SMMP algorithm.
+Matrix multiplication using the SMMP algorithm [SMMP]_.
+
+.. [SMMP] Bank, R. E., & Douglas, C. C. (1993). Sparse matrix multiplication package (SMMP).
+    _Advances in Computational Mathematics_, 1(1), 127–137. <http://dx.doi.org/10.1007/BF02070824>
 """
 
 import numpy as np
