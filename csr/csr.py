@@ -10,8 +10,6 @@ import scipy.sparse as sps
 from csr.kernels import releasing, active_kernel
 from csr import _csr_ops as _ops
 
-_logger = logging.getLogger(__name__)
-
 __impl_mod = None
 
 
