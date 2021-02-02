@@ -48,7 +48,7 @@ def csrs(draw, nrows=None, ncols=None, nnz=None, values=None):
 
 
 @st.composite
-def sparse_matrices(draw, max_shape=(1000, 1000), density=fractions(exclude_min=True), format='csr'):
+def sparse_matrices(draw, max_shape=(1000, 1000), density=fractions(), format='csr'):
     ubr, ubc = max_shape
     rows = draw(st.integers(1, ubr))
     cols = draw(st.integers(1, ubc))

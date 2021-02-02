@@ -2,87 +2,17 @@
 Python API for CSR matrices.
 """
 
-import logging
-
 import numpy as np
 import scipy.sparse as sps
 
 from csr.kernels import releasing, active_kernel
-from csr import _csr_ops as _ops
-
-__impl_mod = None
-
-
-def _impl_mod():
-    global __impl_mod
-    if __impl_mod is None:
-        from . import _csr_types
-        __impl_mod = _csr_types
-    return __impl_mod
-
-
-# This class lives here, un-JITted, so we avoid Numba compiles until necessary
-class _CSR:
-    """
-    Internal implementation class for :py:class:`CSR`. If you work with CSRs from Numba,
-    you will use a :func:`numba.jitclass`-ed version of this.
-    """
-    def __init__(self, nrows, ncols, nnz, ptrs, inds, vals):
-        self.nrows = nrows
-        self.ncols = ncols
-        self.nnz = nnz
-        self.rowptrs = ptrs
-        self.colinds = inds
-        self.values = vals
-
-    def row(self, row):
-        sp, ep = self.row_extent(row)
-
-        v = np.zeros(self.ncols)
-        cols = self.colinds[sp:ep]
-        if self.values is None:
-            v[cols] = 1
-        else:
-            v[cols] = self.values[sp:ep]
-
-        return v
-
-    def row_extent(self, row):
-        sp = self.rowptrs[row]
-        ep = self.rowptrs[row+1]
-        return (sp, ep)
-
-    def row_cs(self, row):
-        sp = self.rowptrs[row]
-        ep = self.rowptrs[row + 1]
-
-        return self.colinds[sp:ep]
-
-    def row_vs(self, row):
-        sp = self.rowptrs[row]
-        ep = self.rowptrs[row + 1]
-
-        if self.values is None:
-            return np.full(ep - sp, 1.0)
-        else:
-            return self.values[sp:ep]
-
-    def rowinds(self):
-        ris = np.zeros(self.nnz, np.intc)
-        for i in range(self.nrows):
-            sp, ep = self.row_extent(i)
-            ris[sp:ep] = i
-        return ris
-
-    def transpose(self):
-        shape = self.nrows, self.ncols
-        rp, ci, vs = _ops._csr_transpose(shape, self.rowptrs, self.colinds, self.values)
-        return _CSR(self.ncols, self.nrows, self.nnz, rp, ci, vs)
+from csr import native_ops as _ops
+from csr.layout import EMPTY_VALUES, _CSR
 
 
 def _csr_delegate(name):
     def func(self):
-        return getattr(self._N, name)
+        return getattr(self.R, name)
 
     return property(func)
 
@@ -92,37 +22,41 @@ class CSR:
     Simple compressed sparse row matrix.  This is like :py:class:`scipy.sparse.csr_matrix`, with
     a couple of useful differences:
 
-    * It is backed by a Numba jitclass, so it can be directly used from Numba-optimized functions.
     * The value array is optional, for cases in which only the matrix structure is required.
     * The value array, if present, is always double-precision.
 
     You generally don't want to create this class yourself with the constructor.  Instead, use one
     of its class methods.
 
-    If you need to pass an instance off to a Numba-compiled function, use :py:attr:`N`::
+    It is backed by a namedtuple (py:class:`csr._CSR`) that can be passed around through
+    Numba-compiled functions, and nopython compiled equivalents of many of its methods
+    are available as functions in the :py:mod:`csr.native_ops` module that take the
+    underlying tuple (accessible by :py:attr:`R`) as a parameter.
 
-        _some_numba_fun(csr.N)
+    If you need to pass an instance off to a Numba-compiled function, use :py:attr:`R`::
 
-    We use the indirection between this and the Numba jitclass so that the main CSR implementation
-    can be pickled, and so that we can have class and instance methods that are not compatible with
-    jitclass but which are useful from interpreted code.
+        _some_numba_fun(csr.R)
 
     Attributes:
-        N(_CSR): the Numba jitclass backing (has the same attributes and most methods).
+        R(_CSR): the named tuple containing the actual matrix data
         nrows(int): the number of rows.
         ncols(int): the number of columns.
         nnz(int): the number of entries.
         rowptrs(numpy.ndarray): the row pointers.
         colinds(numpy.ndarray): the column indices.
-        values(numpy.ndarray): the values
+        values(numpy.ndarray or None): the values
     """
-    __slots__ = ['_N']
+    __slots__ = ['R']
 
-    def __init__(self, nrows=None, ncols=None, nnz=None, ptrs=None, inds=None, vals=None, N=None):
-        if N is not None:
-            self._N = N
+    def __init__(self, nrows=None, ncols=None, nnz=None, ptrs=None, inds=None, vals=None, R=None):
+        if R is not None:
+            assert R.colinds.dtype == np.int32
+            self.R = R
         else:
-            self._N = _CSR(nrows, ncols, nnz, ptrs, inds, vals)
+            assert inds.dtype == np.int32
+            if vals is None:
+                vals = EMPTY_VALUES
+            self.R = _CSR(nrows, ncols, nnz, ptrs, inds, vals)
 
     @classmethod
     def empty(cls, shape, row_nnzs, *, rpdtype=np.intc):
@@ -217,24 +151,6 @@ class CSR:
             values = np.full(self.nnz, 1.0)
         return sps.csr_matrix((values, self.colinds, self.rowptrs), shape=(self.nrows, self.ncols))
 
-    @property
-    def N(self):
-        """
-        Get the native backing array.
-        """
-        # we do this *lazily*.
-        n = self._N
-        if isinstance(n, _CSR):
-            # This is not yet upgraded
-            impl = _impl_mod()
-            if n.rowptrs.dtype == np.int64:
-                self._N = impl._CSR64(n.nrows, n.ncols, n.nnz, n.rowptrs, n.colinds, n.values)
-            else:
-                self._N = impl._CSR(n.nrows, n.ncols, n.nnz, n.rowptrs, n.colinds, n.values)
-            # make sure types behave how we expect
-            assert impl.n.config.DISABLE_JIT or not isinstance(self._N, _CSR)
-        return self._N
-
     nrows = _csr_delegate('nrows')
     ncols = _csr_delegate('ncols')
     nnz = _csr_delegate('nnz')
@@ -243,31 +159,16 @@ class CSR:
 
     @property
     def values(self):
-        return self._N.values
-
-    @values.setter
-    def values(self, vs: np.ndarray):
-        if vs is not None:
-            if not isinstance(vs, np.ndarray):
-                raise TypeError('values not an ndarray')
-            if vs.ndim != 1:
-                raise ValueError('values has {} dimensions, expected 1'.format(vs.ndims))
-            if vs.shape[0] < self.nnz:
-                s = 'values has only {} entries (expected at least {})'
-                raise ValueError(s.format(vs.shape[0], self.nnz))
-
-            vs = vs[:self.nnz]
-            vs = np.require(vs, 'f8')
-            self._N.values = vs
+        if self.R.values.size == 0:
+            return None
         else:
-            self._N.values = None
+            return self.R.values
 
     def subset_rows(self, begin, end):
         """
         Subset the rows in this matrix.
         """
-        impl = _impl_mod()
-        return CSR(N=impl._subset_rows(self.N, begin, end))
+        return CSR(N=_ops._subset_rows(self.R, begin, end))
 
     def rowinds(self) -> np.ndarray:
         """
@@ -275,7 +176,7 @@ class CSR:
         :py:attr:`values`, this can form a COO-format sparse matrix.
         """
         # we have to upgrade to Numba for this one - too slow in Python
-        return self.N.rowinds()
+        return _ops.rowinds(self.R)
 
     def row(self, row):
         """
@@ -285,9 +186,12 @@ class CSR:
             row(int): the row index.
 
         Returns:
-            numpy.ndarray: the row, with 0s in the place of missing values.
+            numpy.ndarray:
+                the row, with 0s in the place of missing values.  If the CSR only
+                stores matrix structure, the returned vector has 1s where the CSR
+                records an entry.
         """
-        return self._N.row(row)
+        return _ops.row(self.R, row)
 
     def row_extent(self, row):
         """
@@ -300,19 +204,20 @@ class CSR:
             tuple: ``(s, e)``, where the row occupies positions :math:`[s, e)` in the
             CSR data.
         """
-        return self._N.row_extent(row)
+        return _ops.row_extent(self.R, row)
 
     def row_cs(self, row):
         """
         Get the column indcies for the stored values of a row.
         """
-        return self._N.row_cs(row)
+        return _ops.row_cs(self.R, row)
 
     def row_vs(self, row):
         """
-        Get the stored values of a row.
+        Get the stored values of a row.  If only the matrix structure is stored, this
+        returns a vector of 1s.
         """
-        return self._N.row_vs(row)
+        return _ops.row_vs(self.R, row)
 
     def row_nnzs(self):
         """
@@ -345,11 +250,10 @@ class CSR:
             numpy.ndarray:
                 The normalization values for each row.
         """
-        impl = _impl_mod()
         if normalization == 'center':
-            return impl._center_rows(self.N)
+            return _ops.center_rows(self.R)
         elif normalization == 'unit':
-            return impl._unit_rows(self.N)
+            return _ops.unit_rows(self.R)
         else:
             raise ValueError('unknown normalization: ' + normalization)
 
@@ -366,8 +270,8 @@ class CSR:
             CSR: the transpose of this matrix (or, equivalently, this matrix in CSC format).
         """
 
-        n2 = self.N.transpose()
-        return CSR(N=n2)
+        r2 = _ops.transpose(self.R, values)
+        return CSR(R=r2)
 
     def filter_nnzs(self, filt):
         """
@@ -409,13 +313,26 @@ class CSR:
         """
 
         K = active_kernel()
-        with releasing(K.to_handle(self.N), K) as a_h:
-            with releasing(K.to_handle(other.N), K) as b_h:
+        with releasing(K.to_handle(self.R), K) as a_h:
+            with releasing(K.to_handle(other.R), K) as b_h:
                 c_h = K.mult_ab(a_h, b_h)
                 with releasing(c_h, K):
-                    cn = K.from_handle(c_h)
+                    crepr = K.from_handle(c_h)
 
-        return CSR(N=cn)
+        return CSR(R=crepr)
+
+    def drop_values(self):
+        """
+        Remove the value array from this CSR.
+        """
+        self.R = self.R._replace(values=EMPTY_VALUES)
+
+    def fill_values(self, value):
+        """
+        Fill the values of this CSR with the specified value.  If the CSR is
+        structure-only, a value array is added.
+        """
+        self.R = self.R._replace(values=np.full(self.nnz, value, dtype='float64'))
 
     def __str__(self):
         return '<CSR {}x{} ({} nnz)>'.format(self.nrows, self.ncols, self.nnz)
@@ -439,4 +356,6 @@ class CSR:
         rps = state['rowptrs']
         cis = state['colinds']
         vs = state['values']
-        self._N = _CSR(nrows, ncols, nnz, rps, cis, vs)
+        if vs is None:
+            vs = EMPTY_VALUES
+        self.R = _CSR(nrows, ncols, nnz, rps, cis, vs)

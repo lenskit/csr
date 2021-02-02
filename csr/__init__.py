@@ -4,3 +4,4 @@ __all__ = [
 ]
 
 from .csr import CSR
+from .layout import _CSR  # noqa: F401

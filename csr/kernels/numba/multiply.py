@@ -7,7 +7,8 @@ Matrix multiplication using the SMMP algorithm [SMMP]_.
 
 import numpy as np
 from numba import njit
-from csr._csr_types import _CSR64
+from csr.layout import _CSR
+from csr.native_ops import row_extent
 
 
 @njit
@@ -36,7 +37,7 @@ def mult_ab(a_h, b_h):
     c_vs = _num_mm(a_h, b_h, c_rp, c_ci)
 
     # build the result
-    return _CSR64(a_h.nrows, b_h.ncols, c_nnz, c_rp, c_ci, c_vs)
+    return _CSR(a_h.nrows, b_h.ncols, c_nnz, c_rp, c_ci, c_vs)
 
 
 @njit
@@ -52,10 +53,10 @@ def _sym_mm(a_h, b_h, c_rp):
         length = 0
 
         # Pass 1: count and link columns in row
-        a_rs, a_re = a_h.row_extent(i)
+        a_rs, a_re = row_extent(a_h, i)
         for jj in range(a_rs, a_re):
             j = a_h.colinds[jj]
-            b_rs, b_re = b_h.row_extent(j)
+            b_rs, b_re = row_extent(b_h, j)
             for kk in range(b_rs, b_re):
                 k = b_h.colinds[kk]
                 if index[k] < 0:
@@ -91,12 +92,12 @@ def _num_mm(a_h, b_h, c_rp, c_ci):
     c_vs = np.zeros(len(c_ci))
 
     for i in range(a_h.nrows):
-        a_rs, a_re = a_h.row_extent(i)
+        a_rs, a_re = row_extent(a_h, i)
         for jj in range(a_rs, a_re):
             j = a_h.colinds[jj]
             av = a_h.values[jj]
 
-            b_rs, b_re = b_h.row_extent(j)
+            b_rs, b_re = row_extent(b_h, j)
             for kk in range(b_rs, b_re):
                 k = b_h.colinds[kk]
                 work[k] += av * b_h.values[kk]

@@ -12,7 +12,7 @@ import hypothesis.extra.numpy as nph
 @csr_slow()
 @given(sparse_matrices())
 def test_mean_center(spm):
-    assume(spm.nnz >= 10)
+    # assume(spm.nnz >= 10)
     csr = CSR.from_scipy(spm)
 
     m2 = csr.normalize_rows('center')
@@ -31,7 +31,7 @@ def test_mean_center(spm):
 @csr_slow()
 @given(sparse_matrices())
 def test_unit_norm(spm):
-    assume(spm.nnz >= 10)
+    # assume(spm.nnz >= 10)
     csr = CSR.from_scipy(spm)
 
     m2 = csr.normalize_rows('unit')

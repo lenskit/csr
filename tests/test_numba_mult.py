@@ -22,7 +22,7 @@ def test_symb(pair):
 
     cp = np.zeros_like(A.rowptrs)
 
-    cci = _sym_mm(A.N, B.N, cp)
+    cci = _sym_mm(A.R, B.R, cp)
 
     # Is everything in range?
     assert all(cci >= 0)

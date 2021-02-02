@@ -23,6 +23,7 @@ def test_multiply(pair):
     prod = csra.multiply(csrb)
     assert isinstance(prod, CSR)
     _log.info('got %r', prod)
+    _log.info('inner: %s', prod.R)
     assert prod.nrows == csra.nrows
     assert prod.ncols == csrb.ncols
 
@@ -32,6 +33,8 @@ def test_multiply(pair):
     assert prod.ncols == abnc
 
     assert prod.nnz == AB.nnz
+    if prod.nnz > 0:
+        assert prod.values is not None
     nrows = csra.nrows
 
     for i in range(nrows):
