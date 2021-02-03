@@ -14,6 +14,10 @@ def op_csr_mult(A, B):
 op_csr_mult.prepare = CSR.from_scipy
 
 
+@mark.benchmark(
+    warmup=True,
+    warmup_iterations=1
+)
 @mark.parametrize('impl', ['csr', 'sps'])
 def test_matrix_mult(benchmark, impl):
     op = globals()[f'op_{impl}_mult']
