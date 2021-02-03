@@ -7,3 +7,4 @@ __pycache__
 *.lprof
 .coverage
 *.egg-info/
+.ipynb_checkpoints/
