@@ -3,6 +3,7 @@ Kernel implementing matrix operations in pure Numba.
 """
 
 
+from numba import njit
 from .multiply import mult_ab
 
 __all__ = [
@@ -13,6 +14,7 @@ __all__ = [
 ]
 
 
+@njit
 def to_handle(csr):
     """
     Convert a native CSR to a handle.  The caller must arrange for the CSR last at
@@ -22,6 +24,7 @@ def to_handle(csr):
     return csr
 
 
+@njit
 def from_handle(h):
     """
     Convert a handle to a CSR.  The handle may be released after this is called.
@@ -31,6 +34,7 @@ def from_handle(h):
     return h
 
 
+@njit
 def release_handle(h):
     """
     Release a handle.
