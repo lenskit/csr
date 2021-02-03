@@ -3,7 +3,14 @@ Kernel implementing matrix operations in pure Numba.
 """
 
 
-from .multiply import mult_ab  # noqa: F401
+from .multiply import mult_ab
+
+__all__ = [
+    'to_handle',
+    'from_handle',
+    'release_handle',
+    'mult_ab'
+]
 
 
 def to_handle(csr):
