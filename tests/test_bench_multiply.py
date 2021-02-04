@@ -17,6 +17,9 @@ def test_mult_ab(kernel, benchmark):
     A = CSR.from_scipy(A)
     B = CSR.from_scipy(B)
 
+    # make sure it's compiled
+    A.multiply(B)
+
     def op():
         A.multiply(B)
 
@@ -35,6 +38,9 @@ def test_mult_ab_by_density(kernel, benchmark, density):
     A = CSR.from_scipy(A)
     B = CSR.from_scipy(B)
 
+    # make sure it's compiled
+    A.multiply(B)
+
     def op():
         A.multiply(B)
 
@@ -42,15 +48,16 @@ def test_mult_ab_by_density(kernel, benchmark, density):
 
 
 @mark.benchmark(
-    group='MultABt',
-    warmup=True,
-    warmup_iterations=1
+    group='MultABt'
 )
 def test_mult_abt(kernel, benchmark):
     A = sps.random(100, 500, 0.1, format='csr')
     B = sps.random(200, 500, 0.2, format='csr')
     A = CSR.from_scipy(A)
     B = CSR.from_scipy(B)
+
+    # make sure it's compiled
+    A.multiply(B, transpose=True)
 
     def op():
         A.multiply(B, transpose=True)
@@ -69,6 +76,9 @@ def test_mult_abt_by_density(kernel, benchmark, density):
     B = sps.random(100, 100, density, format='csr')
     A = CSR.from_scipy(A)
     B = CSR.from_scipy(B)
+
+    # make sure it's compiled
+    A.multiply(B, transpose=True)
 
     def op():
         A.multiply(B, transpose=True)
