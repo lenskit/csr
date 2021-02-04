@@ -4,7 +4,9 @@ selected as the default.  It primarily exists for ease in testing and
 benchmarking CSR operations.
 """
 
-from csr import CSR
+import numpy as np
+from scipy.sparse import csr_matrix
+from csr import CSR, _CSR
 
 __all__ = [
     'to_handle',
@@ -14,12 +16,15 @@ __all__ = [
 ]
 
 
-def to_handle(csr):
-    return CSR(R=csr).to_scipy()
+def to_handle(csr: _CSR):
+    values = csr.values if csr.values.size > 0 else np.ones(csr.nnz)
+    return csr_matrix((values, csr.colinds, csr.rowptrs), (csr.nrows, csr.ncols))
 
 
 def from_handle(h):
-    return CSR.from_scipy(h, False).R
+    m: csr_matrix = h.tocsr()
+    nr, nc = m.shape
+    return _CSR(nr, nc, m.nnz, m.indptr, m.indices, m.data)
 
 
 def release_handle(h):
