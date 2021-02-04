@@ -12,9 +12,9 @@ import numba.types as nt
     ('ncols', nt.intc),
     ('nnz', nt.intc),
     ('has_values', nt.boolean),
-    ('rowptrs', nt.intc[:]),
-    ('colinds', nt.intc[:]),
-    ('values', nt.float64[:])
+    ('rowptrs', nt.intc[::1]),
+    ('colinds', nt.intc[::1]),
+    ('values', nt.float64[::1])
 ])
 class _CSR:
     """
