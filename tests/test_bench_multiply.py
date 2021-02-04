@@ -46,7 +46,7 @@ def test_mult_ab_by_density(kernel, benchmark, density):
     warmup=True,
     warmup_iterations=1
 )
-def test_mult_ab(kernel, benchmark):
+def test_mult_abt(kernel, benchmark):
     A = sps.random(100, 500, 0.1, format='csr')
     B = sps.random(200, 500, 0.2, format='csr')
     A = CSR.from_scipy(A)
