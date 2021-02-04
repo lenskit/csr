@@ -33,3 +33,7 @@ def release_handle(h):
 
 def mult_ab(A, B):
     return A @ B
+
+
+def mult_vec(A, v):
+    return A @ v

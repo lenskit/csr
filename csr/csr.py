@@ -321,6 +321,20 @@ class CSR:
 
         return CSR(R=crepr)
 
+    def mult_vec(self, v):
+        """
+        Multiply this matrix by a vector.
+
+        Args:
+            other(numpy.ndarray): A vector, of length `ncols`.
+
+        Returns:
+            numpy.ndarray: :math:`A\\vec{x}`, as a vector.
+        """
+        K = get_kernel()
+        with releasing(K.to_handle(self.R), K) as h:
+            return K.mult_vec(h, v)
+
     def drop_values(self):
         """
         Remove the value array from this CSR.
