@@ -9,3 +9,9 @@ bench*.json
 .coverage
 *.egg-info/
 .ipynb_checkpoints/
+/Release/
+/Debug/
+*.pyd
+*.so
+*.dylib
+_*.c
