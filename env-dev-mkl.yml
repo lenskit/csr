@@ -17,8 +17,6 @@ dependencies:
 - mkl-devel
 - libblas=*=*mkl
 - notebook
-- ipywidgets
 - matplotlib
 - seaborn
 - pandas
-- tqdm
