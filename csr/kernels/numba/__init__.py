@@ -8,13 +8,14 @@ from numba import njit
 
 from csr.layout import _CSR
 from csr.native_ops import row_extent
-from .multiply import mult_ab
+from .multiply import mult_ab, mult_abt
 
 __all__ = [
     'to_handle',
     'from_handle',
     'release_handle',
     'mult_ab',
+    'mult_abt',
     'mult_vec'
 ]
 
@@ -47,14 +48,15 @@ def release_handle(h):
     pass
 
 
-@njit
+@njit(nogil=True)
 def mult_vec(h: _CSR, v):
     res = np.zeros(h.nrows)
+    have_values = h.values.size > 0
 
     for i in range(h.nrows):
         sp, ep = row_extent(h, i)
         for j in range(sp, ep):
-            x = h.values[j] if h.values.size > 0 else 1
+            x = h.values[j] if have_values else 1
             res[i] += x * v[h.colinds[j]]
 
     return res

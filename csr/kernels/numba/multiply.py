@@ -8,10 +8,10 @@ Matrix multiplication using the SMMP algorithm [SMMP]_.
 import numpy as np
 from numba import njit
 from csr.layout import _CSR
-from csr.native_ops import row_extent
+from csr.native_ops import row_extent, transpose
 
 
-@njit
+@njit(nogil=True)
 def mult_ab(a_h, b_h):
     """
     Multiply matrices A and B.
@@ -38,6 +38,25 @@ def mult_ab(a_h, b_h):
 
     # build the result
     return _CSR(a_h.nrows, b_h.ncols, c_nnz, c_rp, c_ci, c_vs)
+
+
+@njit(nogil=True)
+def mult_abt(a_h, b_h):
+    """
+    Multiply matrices A and B^T.
+
+    Args:
+        a_h: the handle of matrix A
+        b_h: the handle of matrix B
+
+    Returns:
+        the handle of the product; it must be released when no longer needed.
+    """
+    assert a_h.ncols == b_h.ncols
+
+    # transpose B
+    bt_h = transpose(b_h, True)
+    return mult_ab(a_h, bt_h)
 
 
 @njit

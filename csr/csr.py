@@ -301,12 +301,13 @@ class CSR:
 
         return CSR(self.nrows, self.ncols, nnz2, rps2, cis2, vs2)
 
-    def multiply(self, other):
+    def multiply(self, other, *, transpose=False):
         """
         Multiply this matrix by another.
 
         Args:
             other(CSR): the other matrix.
+            transpose(bool): if ``True``, compute :math:`AB^{T}` instead of :math:`AB`.
 
         Returns
             CSR: the product of the two matrices.
@@ -315,7 +316,10 @@ class CSR:
         K = get_kernel()
         with releasing(K.to_handle(self.R), K) as a_h:
             with releasing(K.to_handle(other.R), K) as b_h:
-                c_h = K.mult_ab(a_h, b_h)
+                if transpose:
+                    c_h = K.mult_abt(a_h, b_h)
+                else:
+                    c_h = K.mult_ab(a_h, b_h)
                 with releasing(c_h, K):
                     crepr = K.from_handle(c_h)
 

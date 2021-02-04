@@ -35,5 +35,9 @@ def mult_ab(A, B):
     return A @ B
 
 
+def mult_abt(A, B):
+    return A @ B.T
+
+
 def mult_vec(A, v):
     return A @ v
