@@ -7,7 +7,7 @@ import numpy as np
 from numba import njit
 
 from csr.layout import _CSR
-from csr.native_ops import row_extent
+from csr.native_ops import row_extent, row_cs, row_vs
 from .multiply import mult_ab, mult_abt
 
 __all__ = [
@@ -55,8 +55,13 @@ def mult_vec(h: _CSR, v):
 
     for i in range(h.nrows):
         sp, ep = row_extent(h, i)
-        for j in range(sp, ep):
-            x = h.values[j] if have_values else 1
-            res[i] += x * v[h.colinds[j]]
+        if have_values:
+            for jj in range(sp, ep):
+                ci = h.colinds[jj]
+                res[i] += h.values[jj] * v[ci]
+        else:
+            for jj in range(sp, ep):
+                ci = h.colinds[jj]
+                res[i] += v[ci]
 
     return res
