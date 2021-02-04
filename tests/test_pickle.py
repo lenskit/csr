@@ -4,10 +4,8 @@ import pickle
 from csr import CSR
 from csr.test_utils import csrs, csr_slow
 
-from pytest import mark, approx, raises
-from hypothesis import given, assume, settings, HealthCheck
-import hypothesis.strategies as st
-import hypothesis.extra.numpy as nph
+from pytest import mark
+from hypothesis import given
 
 
 @csr_slow()
@@ -27,6 +25,7 @@ def test_csr_pickle(csr):
         assert csr2.values is None
 
 
+@mark.skip(reason='64-bit row pointers disabled')
 @csr_slow()
 @given(csrs())
 def test_csr64_pickle(csr):
