@@ -23,7 +23,7 @@ def test_mult_ab(kernel, benchmark):
     benchmark(op)
 
 
-@mark.parametrize('density', np.linspace(0, 1, 10))
+@mark.parametrize('density', np.linspace(0, 1, 11))
 @mark.benchmark(
     group='MultAB-Density',
     warmup=True,
