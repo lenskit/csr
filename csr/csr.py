@@ -28,7 +28,7 @@ class CSR:
     You generally don't want to create this class yourself with the constructor.  Instead, use one
     of its class methods.
 
-    It is backed by a namedtuple (py:class:`csr._CSR`) that can be passed around through
+    It is backed by separate storage type (py:class:`csr._CSR`) that can be passed around through
     Numba-compiled functions, and nopython compiled equivalents of many of its methods
     are available as functions in the :py:mod:`csr.native_ops` module that take the
     underlying tuple (accessible by :py:attr:`R`) as a parameter.
@@ -343,14 +343,16 @@ class CSR:
         """
         Remove the value array from this CSR.
         """
-        self.R = self.R._replace(values=EMPTY_VALUES)
+        self.R.values = EMPTY_VALUES
+        self.R.has_values = False
 
     def fill_values(self, value):
         """
         Fill the values of this CSR with the specified value.  If the CSR is
         structure-only, a value array is added.
         """
-        self.R = self.R._replace(values=np.full(self.nnz, value, dtype='float64'))
+        self.R.values = np.full(self.nnz, value, dtype='float64')
+        self.R.has_values = True
 
     def __str__(self):
         return '<CSR {}x{} ({} nnz)>'.format(self.nrows, self.ncols, self.nnz)

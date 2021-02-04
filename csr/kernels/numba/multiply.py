@@ -26,8 +26,7 @@ def mult_ab(a_h, b_h):
 
     assert a_h.ncols == b_h.nrows
 
-    # play it safe with 64-bit rowptrs
-    c_rp = np.zeros(a_h.nrows + 1, np.int64)
+    c_rp = np.zeros(a_h.nrows + 1, np.intc)
 
     # step 1: symbolic multiplication
     c_ci = _sym_mm(a_h, b_h, c_rp)
