@@ -3,9 +3,10 @@ import numpy as np
 import scipy.sparse as sps
 
 from csr import CSR
+from csr.kernels import use_kernel, get_kernel
 from csr.test_utils import csrs, csr_slow, mm_pairs
 
-from pytest import mark, approx, raises
+from pytest import mark, approx, raises, fixture
 from hypothesis import given, assume, settings, HealthCheck
 import hypothesis.strategies as st
 import hypothesis.extra.numpy as nph
@@ -15,7 +16,7 @@ _log = logging.getLogger(__name__)
 
 @settings(deadline=None)
 @given(mm_pairs())
-def test_multiply(pair):
+def test_multiply(kernel, pair):
     A, B = pair
     csra = CSR.from_scipy(A)
     csrb = CSR.from_scipy(B)

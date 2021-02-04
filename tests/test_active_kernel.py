@@ -1,4 +1,4 @@
-from csr.kernels import default_kernel, get_kernel, active_kernel
+from csr.kernels import default_kernel, get_kernel, use_kernel
 
 
 def test_get_default():
@@ -18,7 +18,7 @@ def test_get_numba():
 
 
 def test_with_scipy():
-    with active_kernel('scipy'):
+    with use_kernel('scipy'):
         k = get_kernel()
         assert k.__name__ == 'csr.kernels.scipy'
 

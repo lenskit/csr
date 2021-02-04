@@ -15,11 +15,11 @@ __all__ = [
 
 
 def to_handle(csr):
-    return csr.to_scipy()
+    return CSR(R=csr).to_scipy()
 
 
 def from_handle(h):
-    return CSR.from_scipy(h, False)
+    return CSR.from_scipy(h, False).R
 
 
 def release_handle(h):

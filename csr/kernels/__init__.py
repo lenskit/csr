@@ -56,7 +56,7 @@ def set_kernel(name):
 
 
 @contextmanager
-def active_kernel(name):
+def use_kernel(name):
     """
     Context manager to run code with a specified (thread-local) kernel.  It calls
     :py:func:`set_kernel`, and restores the previously-active kernel when the context
