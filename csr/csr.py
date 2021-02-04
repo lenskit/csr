@@ -5,7 +5,7 @@ Python API for CSR matrices.
 import numpy as np
 import scipy.sparse as sps
 
-from csr.kernels import releasing, active_kernel
+from csr.kernels import get_kernel, releasing
 from csr import native_ops as _ops
 from csr.layout import EMPTY_VALUES, _CSR
 
@@ -312,7 +312,7 @@ class CSR:
             CSR: the product of the two matrices.
         """
 
-        K = active_kernel()
+        K = get_kernel()
         with releasing(K.to_handle(self.R), K) as a_h:
             with releasing(K.to_handle(other.R), K) as b_h:
                 c_h = K.mult_ab(a_h, b_h)
