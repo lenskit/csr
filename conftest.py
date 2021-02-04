@@ -22,3 +22,4 @@ def kernel(request):
 
 # set up profiles
 settings.register_profile('large', max_examples=5000)
+settings.register_profile('nojit', max_examples=10)
