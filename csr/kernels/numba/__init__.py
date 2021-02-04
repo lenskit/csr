@@ -53,15 +53,15 @@ def mult_vec(h: _CSR, v):
     res = np.zeros(h.nrows)
     have_values = h.values.size > 0
 
-    for i in range(h.nrows):
-        sp, ep = row_extent(h, i)
+    row = 0
+    for i in range(h.nnz):
+        # advance the row if necessary
+        while i == h.rowptrs[row+1]:
+            row += 1
+        col = h.colinds[i]
         if have_values:
-            for jj in range(sp, ep):
-                ci = h.colinds[jj]
-                res[i] += h.values[jj] * v[ci]
+            res[row] += v[col] * h.values[i]
         else:
-            for jj in range(sp, ep):
-                ci = h.colinds[jj]
-                res[i] += v[ci]
+            res[row] += v[col]
 
     return res
