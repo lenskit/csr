@@ -64,6 +64,7 @@ def test_csr_row_fixed():
     assert all(csr.row(3) == np.array([0, 4, 0], dtype=np.float_))
 
 
+@settings(deadline=500)
 @given(sparse_matrices())
 def test_csr_row(smat):
     csr = CSR.from_scipy(smat)
