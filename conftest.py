@@ -7,9 +7,16 @@ from csr.kernels import use_kernel, get_kernel
 # turn off Numba logging
 logging.getLogger('numba').setLevel(logging.INFO)
 
+KERNELS = ["scipy", "numba"]
+try:
+    import csr.kernels.mkl  # noqa: F401
+    KERNELS.append("mkl")
+except ImportError:
+    pass  # no MKL available
+
 
 # set up fixtures
-@fixture(scope="module", params=["scipy", "numba"])
+@fixture(scope="module", params=KERNELS)
 def kernel(request):
     """
     Fixture for variable CSR kernels.  This fixture is parameterized, so if you
