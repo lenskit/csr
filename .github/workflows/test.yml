@@ -34,7 +34,7 @@ jobs:
       with:
         update-conda: true
         python-version: ${{ matrix.python }}
-        conda-channels: [conda-forge]
+        conda-channels: conda-forge
 
     - name: Locate Python
       run: |
