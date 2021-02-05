@@ -9,5 +9,6 @@ dependencies:
 - pytest
 - pytest-doctestplus
 - pytest-cov
+- pytest-benchmark
 - hypothesis
 - libblas=*=*openblas
