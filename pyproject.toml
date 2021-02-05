@@ -34,9 +34,15 @@ doc = [
     "sphinx_rtd_theme"
 ]
 
-[tools.flit.sdist]
+[tool.flit.sdist]
 include = ["tests/*"]
 exclude = [
     ".github",
     "*.ipynb"
+]
+
+[tool.envtool.conda.extra]
+mkl = [
+    "mkl-devel",
+    "libblas=*=*mkl"
 ]
