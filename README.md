@@ -1,5 +1,7 @@
 # CSR Matrices for Python
 
+[![codecov](https://codecov.io/gh/lenskit/csr/branch/main/graph/badge.svg?token=6UQ4O8FCKK)](https://codecov.io/gh/lenskit/csr)
+
 This package provides an implementation of sparse matrices in compressed sparse
 row format for Python. Routines are implemented with Numba, and both the CSR
 data structure and most related matrix and vector operations can be used from
