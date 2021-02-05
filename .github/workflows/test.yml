@@ -35,6 +35,10 @@ jobs:
       run: |
         conda env update -n base -f env-dev-mkl.yml
 
+    - name: Compile MKL helper
+      run: |
+        python -m csr.kernels.build_mkl
+
     - name: Run tests
       run: |
         python -m pytest --cov=csr
