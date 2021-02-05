@@ -59,24 +59,21 @@ class CSR:
             self.R = _CSR(nrows, ncols, nnz, ptrs, inds, vals)
 
     @classmethod
-    def empty(cls, shape, row_nnzs, *, rpdtype=np.intc):
+    def empty(cls, nrows, ncols, row_nnzs=None):
         """
-        Create an empty CSR matrix.
+        Create an uninitialized CSR matrix.
 
         Args:
-            shape(tuple): the array shape (rows,cols)
-            row_nnzs(array-like): the number of nonzero entries for each row
+            nrows(int): the number of rows.
+            ncols(int): the number of columns.
+            row_nnzs(array-like):
+                the number of nonzero entries for each row, or None for an empty matrix.
         """
-        nrows, ncols = shape
-        assert len(row_nnzs) == nrows
-
-        nnz = np.sum(row_nnzs, dtype=np.int64)
-        rowptrs = np.zeros(nrows + 1, dtype=rpdtype)
-        rowptrs[1:] = np.cumsum(row_nnzs, dtype=rpdtype)
-        colinds = np.full(nnz, -1, dtype=np.intc)
-        values = np.full(nnz, np.nan)
-
-        return cls(nrows, ncols, nnz, rowptrs, colinds, values)
+        if row_nnzs is not None:
+            assert len(row_nnzs) == nrows
+            return cls(R=_ops.make_unintialized(nrows, ncols, row_nnzs))
+        else:
+            return cls(R=_ops.make_empty(nrows, ncols))
 
     @classmethod
     def from_coo(cls, rows, cols, vals, shape=None, rpdtype=np.intc):
