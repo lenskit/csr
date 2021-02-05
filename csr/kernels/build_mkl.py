@@ -1,5 +1,6 @@
 import os
 import sys
+import warnings
 from pathlib import Path
 from cffi import FFI
 
@@ -10,6 +11,7 @@ hdr_path = pkg_dir / 'mkl_ops.h'
 if 'CONDA_PREFIX' in os.environ:
     base = Path(os.environ['CONDA_PREFIX'])
 else:
+    warnings.warn('No CONDA_PREFIX set, trying to buil MKL with sys.prefix')
     base = Path(sys.prefix)
 i_dirs = [os.fspath(pkg_dir)]
 l_dirs = []
