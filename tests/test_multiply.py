@@ -50,6 +50,8 @@ def test_multiply(kernel, pair):
 @given(mm_pairs())
 def test_multiply_transpose(kernel, pair):
     A, B = pair
+    assume(A.nnz > 0)
+    assume(B.nnz > 0)
     csra = CSR.from_scipy(A)
     csrb = CSR.from_scipy(B.T)
 

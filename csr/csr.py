@@ -313,9 +313,9 @@ class CSR:
             CSR: the product of the two matrices.
         """
         if transpose:
-            assert other.ncols == self.ncols
+            assert self.ncols == other.ncols
         else:
-            assert other.nrows == self.nrows
+            assert self.ncols == other.nrows
 
         K = get_kernel()
         with releasing(K.to_handle(self.R), K) as a_h:

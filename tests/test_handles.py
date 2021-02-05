@@ -8,7 +8,7 @@ from csr.test_utils import csrs, sparse_matrices
 from hypothesis import given, settings
 
 
-@settings(deadline=500)
+@settings(deadline=2000)
 @given(sparse_matrices())
 def test_make_handle(kernel, mat):
     csr = CSR.from_scipy(mat)
