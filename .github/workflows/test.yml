@@ -38,7 +38,7 @@ jobs:
 
     - name: Set up dependencies
       run: |
-        conda install -q -c conda-forge flit-core packaging pyyaml
+        conda install -qy -c conda-forge flit-core packaging pyyaml
         python envtool.py -n base -E mkl --python-version ${{matrix.python}} --save-env environment.yml
         cat environment.yml
         conda env update -q -n base -f environment.yml
