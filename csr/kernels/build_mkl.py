@@ -7,16 +7,19 @@ pkg_dir = Path(__file__).parent / 'mkl'
 src_path = pkg_dir / 'mkl_ops.c'
 hdr_path = pkg_dir / 'mkl_ops.h'
 
-conda = Path(os.environ['CONDA_PREFIX'])
+if 'CONDA_PREFIX' in os.environ:
+    base = Path(os.environ['CONDA_PREFIX'])
+else:
+    base = Path(sys.prefix)
 i_dirs = [os.fspath(pkg_dir)]
 l_dirs = []
 if os.name == 'nt':
-    lib = conda / 'Library'
+    lib = base / 'Library'
     i_dirs.append(os.fspath(lib / 'include'))
     l_dirs.append(os.fspath(lib / 'lib'))
 else:
-    i_dirs.append(os.fspath(conda / 'include'))
-    l_dirs.append(os.fspath(conda / 'lib'))
+    i_dirs.append(os.fspath(base / 'include'))
+    l_dirs.append(os.fspath(base / 'lib'))
 
 ffibuilder = FFI()
 ffibuilder.cdef(hdr_path.read_text().replace('EXPORT ', ''))
