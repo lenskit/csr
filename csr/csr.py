@@ -2,7 +2,6 @@
 Python API for CSR matrices.
 """
 
-from numba.core.types.abstract import InitialValue
 import numpy as np
 import scipy.sparse as sps
 
