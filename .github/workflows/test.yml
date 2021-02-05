@@ -33,9 +33,8 @@ jobs:
 
     - name: Inspect environment
       run: |
-        conda -s
-        echo "Environment variables"
-        env
+        conda info
+        conda info -s
 
     - name: Set up dependencies
       run: |
