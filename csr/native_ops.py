@@ -13,13 +13,6 @@ _log = logging.getLogger(__name__)
 
 
 @njit
-def _swap(a, i, j):
-    t = a[i]
-    a[i] = a[j]
-    a[j] = t
-
-
-@njit
 def make_empty(nrows, ncols):
     rowptrs = np.zeros(nrows + 1, dtype=np.intc)
     colinds = np.zeros(0, dtype=np.intc)
@@ -190,68 +183,3 @@ def _csr_align(rowinds, nrows, rowptrs, align):
         pos = rpos[row]
         align[pos] = i
         rpos[row] += 1
-
-
-@njit(nogil=True)
-def _csr_align_inplace(shape, rows, cols, vals):
-    """
-    Align COO data in-place for a CSR matrix.
-
-    Args:
-        shape: the matrix shape
-        rows: the matrix row indices (not modified)
-        cols: the matrix column indices (**modified**)
-        vals: the matrix values (**modified**)
-
-    Returns:
-        the CSR row pointers
-    """
-    nrows, ncols = shape
-    nnz = len(rows)
-
-    rps = np.zeros(nrows + 1, np.int64)
-
-    for i in range(nnz):
-        rps[rows[i] + 1] += 1
-    for i in range(nrows):
-        rps[i+1] += rps[i]
-
-    rci = rps[:nrows].copy()
-
-    pos = 0
-    row = 0
-    rend = rps[1]
-
-    # skip to first nonempty row
-    while row < nrows and rend == 0:
-        row += 1
-        rend = rps[row + 1]
-
-    while pos < nnz:
-        r = rows[pos]
-        # swap until we have something in place
-        while r != row:
-            tgt = rci[r]
-            # swap with the target position
-            _swap(cols, pos, tgt)
-            if vals is not None:
-                _swap(vals, pos, tgt)
-
-            # update the target start pointer
-            rci[r] += 1
-
-            # update the loop check
-            r = rows[tgt]
-
-        # now the current entry in the arrays is good
-        # we need to advance to the next entry
-        pos += 1
-        rci[row] += 1
-
-        # skip finished rows
-        while pos == rend and pos < nnz:
-            row += 1
-            pos = rci[row]
-            rend = rps[row+1]
-
-    return rps
