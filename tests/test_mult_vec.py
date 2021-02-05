@@ -26,17 +26,6 @@ def test_mult_vec(kernel, data):
     assert prod.shape == (csra.nrows,)
 
     v2 = md @ v
-    # v2[np.isposinf(v2)] = np.finfo('f8').max
-    # v2[np.isneginf(v2)] = np.finfo('f8').min
-
-    # prod[np.isposinf(prod)] = np.finfo('f8').max
-    # prod[np.isneginf(prod)] = np.finfo('f8').min
-
-    good = np.abs(prod - v2) / v2 <= 1.0e-6
-    good |= np.abs(prod - v2) <= 1.0e-12
-    if not all(good):
-        _log.info('bad outputs: %s', prod[~good])
-        _log.info('the  inputs: %s', v2[~good])
 
     assert prod == approx(v2, nan_ok=True, rel=1.0e-5)
 
