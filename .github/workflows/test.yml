@@ -6,47 +6,47 @@ on:
   pull_request:
 
 jobs:
-  lint:
-    name: Check Source Style
-    runs-on: ubuntu-latest
+  # lint:
+  #   name: Check Source Style
+  #   runs-on: ubuntu-latest
 
-    steps:
-    - uses: actions/checkout@v2
-      with:
-        fetch-depth: 0
+  #   steps:
+  #   - uses: actions/checkout@v2
+  #     with:
+  #       fetch-depth: 0
 
-    - name: Set up Python ${{matrix.python}}
-      uses: actions/setup-python@v2
-      with:
-        python-version: 3.8
+  #   - name: Set up Python ${{matrix.python}}
+  #     uses: actions/setup-python@v2
+  #     with:
+  #       python-version: 3.8
 
-    - name: Prep Pip caching
-      id: pip-cache
-      run: |
-        echo "::set-output name=dir::$(pip cache dir)"
-      shell: bash
+  #   - name: Prep Pip caching
+  #     id: pip-cache
+  #     run: |
+  #       echo "::set-output name=dir::$(pip cache dir)"
+  #     shell: bash
 
-    - name: Cache Pip wheels
-      uses: actions/cache@v1
-      with:
-        path: ${{ steps.pip-cache.outputs.dir }}
-        key: py38-lint-pip-${{ hashFiles('*.egg-info/requires.txt')}}
+  #   - name: Cache Pip wheels
+  #     uses: actions/cache@v1
+  #     with:
+  #       path: ${{ steps.pip-cache.outputs.dir }}
+  #       key: py38-lint-pip-${{ hashFiles('*.egg-info/requires.txt')}}
 
-    - name: Install environment
-      run: |
-        pip install -U flit
+  #   - name: Install environment
+  #     run: |
+  #       pip install -U flit
 
-    - name: Install package
-      run: |
-        flit install --pth-file --extras dev
+  #   - name: Install package
+  #     run: |
+  #       flit install --pth-file --extras dev
 
-    - name: Run lint
-      run: |
-        # Flake8 problem matcher & transform regex from https://github.com/TrueBrain/actions-flake8
-        echo "::add-matcher::.github/flake8-matcher.json"
-        set -o pipefail
-        flake8 |sed -r 's/: ([^W][0-9][0-9][0-9])/: error: \1/;s/: (W[0-9][0-9][0-9])/: warning: \1/'
-        echo "::remove-matcher owner=flake8::"
+  #   - name: Run lint
+  #     run: |
+  #       # Flake8 problem matcher & transform regex from https://github.com/TrueBrain/actions-flake8
+  #       echo "::add-matcher::.github/flake8-matcher.json"
+  #       set -o pipefail
+  #       flake8 |sed -r 's/: ([^W][0-9][0-9][0-9])/: error: \1/;s/: (W[0-9][0-9][0-9])/: warning: \1/'
+  #       echo "::remove-matcher owner=flake8::"
 
   test:
     name: Test with Python ${{matrix.python}} on ${{matrix.platform}}
