@@ -33,6 +33,11 @@ doc = [
     "sphinx",
     "sphinx_rtd_theme"
 ]
+profile = [
+    "notebook",
+    "seaborn",
+    "pandas >=1.0"
+]
 
 [tool.flit.sdist]
 include = ["tests/*"]
