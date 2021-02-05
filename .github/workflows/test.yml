@@ -27,13 +27,29 @@ jobs:
     - name: Setup conda
       uses: s-weigand/setup-conda@v1
       with:
-        update-conda: true
+        # update-conda: true
         python-version: ${{ matrix.python }}
         conda-channels: conda-forge
 
-    - name: Locate Python
+    - name: Set up dependencies
       run: |
-        which python
+        conda env update -n base -f env-dev-mkl.yml
+
+    - name: Run tests
+      run: |
+        python -m pytest --cov=csr
+
+    - name: Run tests without coverage
+      run: |
+        python -m pytest --cov=csr --cov-append --log-file=test-nojit.log --hypothesis-profile=nojit
+      env:
+        NUMBA_DISABLE_JIT: 1
+
+    - name: Aggregate coverage data
+      run: coverage xml
+
+    - name: Upload coverage
+      uses: codecov/codecov-action@v1
 
   # sdist:
   #   name: Build Source Packages

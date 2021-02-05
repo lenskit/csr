@@ -16,7 +16,7 @@ dependencies:
 - mkl
 - mkl-devel
 - libblas=*=*mkl
-- notebook
-- matplotlib
-- seaborn
-- pandas
+# - notebook
+# - matplotlib
+# - seaborn
+# - pandas
