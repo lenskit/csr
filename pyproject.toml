@@ -11,7 +11,7 @@ classifiers = ["License :: OSI Approved :: MIT License"]
 description-file = "README.md"
 requires-python = ">= 3.6.1"
 requires = [
-    "numba >= 0.45",
+    "numba >= 0.51",
     "numpy >= 1.16",
     "scipy",
     "cffi >= 1.12.2"
