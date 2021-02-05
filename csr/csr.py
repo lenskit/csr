@@ -2,6 +2,7 @@
 Python API for CSR matrices.
 """
 
+from numba.core.types.abstract import InitialValue
 import numpy as np
 import scipy.sparse as sps
 
@@ -91,8 +92,8 @@ class CSR:
         """
         if shape is not None:
             nrows, ncols = shape
-            assert np.max(rows) < nrows
-            assert np.max(cols) < ncols
+            assert np.max(rows, initial=0) < nrows
+            assert np.max(cols, initial=0) < ncols
         else:
             nrows = np.max(rows) + 1
             ncols = np.max(cols) + 1
@@ -159,10 +160,7 @@ class CSR:
 
     @property
     def values(self):
-        if self.R.values.size == 0:
-            return None
-        else:
-            return self.R.values
+        return self.R.values if self.R.has_values else None
 
     def subset_rows(self, begin, end):
         """

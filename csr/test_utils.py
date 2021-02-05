@@ -20,17 +20,17 @@ def fractions(**kwargs):
 def csrs(draw, nrows=None, ncols=None, nnz=None, values=None):
     "Draw CSR matrices by generating COO data."
     if ncols is None:
-        ncols = draw(st.integers(5, 100))
+        ncols = draw(st.integers(1, 100))
     elif not isinstance(ncols, int):
         ncols = draw(ncols)
 
     if nrows is None:
-        nrows = draw(st.integers(5, 100))
+        nrows = draw(st.integers(1, 100))
     elif not isinstance(nrows, int):
         nrows = draw(nrows)
 
     if nnz is None:
-        nnz = draw(st.integers(10, nrows * ncols // 2))
+        nnz = draw(st.integers(0, int(np.ceil(nrows * ncols * 0.5))))
     elif not isinstance(nnz, int):
         nnz = draw(nnz)
 
@@ -40,8 +40,7 @@ def csrs(draw, nrows=None, ncols=None, nnz=None, values=None):
     if values is None:
         values = draw(st.booleans())
     if values:
-        rng = draw(st.randoms())
-        vals = np.array([rng.normalvariate(0, 1) for i in range(nnz)])
+        vals = draw(nph.arrays(np.float64, nnz, elements=st.floats(-10, 10)))
     else:
         vals = None
     return CSR.from_coo(rows, cols, vals, (nrows, ncols))

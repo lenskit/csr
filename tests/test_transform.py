@@ -45,9 +45,11 @@ def test_unit_norm(spm):
 
 
 @csr_slow()
-@given(csrs(values=True))
-def test_filter(csr):
-    assume(not np.all(csr.values <= 0))  # we have to have at least one to retain
+@given(sparse_matrices())
+def test_filter(mat):
+    assume(mat.nnz > 0)
+    assume(not np.all(mat.data <= 0))  # we have to have at least one to retain
+    csr = CSR.from_scipy(mat)
     csrf = csr.filter_nnzs(csr.values > 0)
     assert all(csrf.values > 0)
     assert csrf.nnz <= csr.nnz

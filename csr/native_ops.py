@@ -54,7 +54,7 @@ def row(csr, row):
 
     sp, ep = row_extent(csr, row)
     cols = csr.colinds[sp:ep]
-    if csr.values.size > 0:
+    if csr.has_values > 0:
         v[cols] = csr.values[sp:ep]
     else:
         v[cols] = 1
@@ -142,7 +142,7 @@ def transpose(csr, include_values):
     "Transpose a CSR."
     brp = np.zeros(csr.ncols + 1, csr.rowptrs.dtype)
     bci = np.zeros(csr.nnz, np.int32)
-    if include_values and csr.values.size > 0:
+    if include_values and csr.has_values:
         bvs = np.zeros(csr.nnz, np.float64)
     else:
         bvs = np.zeros(0)
@@ -164,7 +164,7 @@ def transpose(csr, include_values):
         for jj in range(ars, are):
             j = csr.colinds[jj]
             bci[brp[j]] = i
-            if include_values and bvs.size > 0:
+            if include_values and csr.has_values:
                 bvs[brp[j]] = csr.values[jj]
             brp[j] += 1
 

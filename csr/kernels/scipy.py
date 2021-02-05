@@ -17,7 +17,7 @@ __all__ = [
 
 
 def to_handle(csr: _CSR):
-    values = csr.values if csr.values.size > 0 else np.ones(csr.nnz)
+    values = csr.values if csr.has_values else np.ones(csr.nnz)
     return csr_matrix((values, csr.colinds, csr.rowptrs), (csr.nrows, csr.ncols))
 
 

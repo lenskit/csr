@@ -50,7 +50,6 @@ def release_handle(h):
 @njit(nogil=True)
 def mult_vec(h: _CSR, v):
     res = np.zeros(h.nrows)
-    have_values = h.values.size > 0
 
     row = 0
     for i in range(h.nnz):
@@ -58,7 +57,7 @@ def mult_vec(h: _CSR, v):
         while i == h.rowptrs[row+1]:
             row += 1
         col = h.colinds[i]
-        if have_values:
+        if h.has_values:
             res[row] += v[col] * h.values[i]
         else:
             res[row] += v[col]
