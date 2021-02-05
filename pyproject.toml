@@ -41,6 +41,10 @@ exclude = [
     "*.ipynb"
 ]
 
+[tool.envtool.conda]
+name = "csr"
+channels = ["conda-forge"]
+
 [tool.envtool.conda.extra]
 mkl = [
     "mkl-devel",
