@@ -1,15 +1,10 @@
 import logging
-import numpy as np
-import scipy.sparse as sps
 
 from csr import CSR
-from csr.kernels import use_kernel, get_kernel
-from csr.test_utils import csrs, csr_slow, mm_pairs
+from csr.test_utils import mm_pairs
 
-from pytest import mark, approx, raises, fixture
-from hypothesis import given, assume, settings, HealthCheck
-import hypothesis.strategies as st
-import hypothesis.extra.numpy as nph
+from pytest import approx
+from hypothesis import given, settings
 
 _log = logging.getLogger(__name__)
 
