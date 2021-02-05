@@ -20,7 +20,15 @@ def _swap(a, i, j):
 
 
 @njit
-def make_empty(nrows, ncols, sizes):
+def make_empty(nrows, ncols):
+    rowptrs = np.zeros(nrows + 1, dtype=np.intc)
+    colinds = np.zeros(0, dtype=np.intc)
+    values = np.zeros(0)
+    return _CSR(nrows, ncols, 0, rowptrs, colinds, values)
+
+
+@njit
+def make_unintialized(nrows, ncols, sizes):
     nnz = np.sum(sizes)
     rowptrs = np.zeros(nrows + 1, dtype=np.intc)
     for i in range(nrows):

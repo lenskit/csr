@@ -5,6 +5,7 @@ from numba.experimental import jitclass
 
 from csr import _CSR
 from ._api import *
+from csr.native_ops import make_empty
 
 __all__ = [
     'mkl_h',
@@ -33,6 +34,10 @@ class mkl_h:
 
 @njit
 def to_handle(csr: _CSR) -> mkl_h:
+    if csr.nnz == 0:
+        # empty matrices don't really work
+        return mkl_h(0, csr.nrows, csr.ncols, np.zeros(0))
+
     _sp = ffi.from_buffer(csr.rowptrs)
     _cols = ffi.from_buffer(csr.colinds)
     if csr.has_values:
@@ -46,6 +51,9 @@ def to_handle(csr: _CSR) -> mkl_h:
 
 @njit
 def from_handle(h: mkl_h) -> _CSR:
+    if not h.H:
+        return make_empty(h.nrows, h.ncols)
+
     rvp = lk_mkl_spexport_p(h.H)
     if rvp is None:
         return None
@@ -82,5 +90,6 @@ def from_handle(h: mkl_h) -> _CSR:
 
 @njit
 def release_handle(h: mkl_h):
-    lk_mkl_spfree(h.H)
+    if h.H:
+        lk_mkl_spfree(h.H)
     h.H = 0

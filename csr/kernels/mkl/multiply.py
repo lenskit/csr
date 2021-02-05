@@ -13,13 +13,19 @@ __all__ = [
 
 @njit(nogil=True)
 def mult_ab(a_h, b_h):
-    h = lk_mkl_spmab(a_h.H, b_h.H)
+    if a_h.H and b_h.H:
+        h = lk_mkl_spmab(a_h.H, b_h.H)
+    else:
+        h = 0
     return mkl_h(h, a_h.nrows, b_h.ncols, EMPTY_VALUES)
 
 
 @njit(nogil=True)
 def mult_abt(a_h, b_h):
-    h = lk_mkl_spmabt(a_h.H, b_h.H)
+    if a_h.H and b_h.H:
+        h = lk_mkl_spmabt(a_h.H, b_h.H)
+    else:
+        h = 0
     return mkl_h(h, a_h.nrows, b_h.nrows, EMPTY_VALUES)
 
 
@@ -27,8 +33,10 @@ def mult_abt(a_h, b_h):
 def mult_vec(a_h, x):
     y = np.zeros(a_h.nrows, dtype=np.float64)
 
-    _x = ffi.from_buffer(x)
-    _y = ffi.from_buffer(y)
+    if a_h.H:
+        _x = ffi.from_buffer(x)
+        _y = ffi.from_buffer(y)
 
-    lk_mkl_spmv(1.0, a_h.H, _x, 0.0, _y)
+        lk_mkl_spmv(1.0, a_h.H, _x, 0.0, _y)
+
     return y
