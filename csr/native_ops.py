@@ -5,7 +5,6 @@ Backend implementations of Numba operations.
 import logging
 import numpy as np
 from numba import njit
-from numba.types import BaseTuple, intc, float64, int64, optional
 
 from .layout import _CSR, EMPTY_VALUES
 
