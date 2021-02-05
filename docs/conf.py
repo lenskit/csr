@@ -30,15 +30,16 @@ html_theme_options = {
     'github_user': 'lenskit',
     'github_repo': 'csr',
     'travis_button': False,
-    'canonical_url': 'https://csr.lenskit.org/'
+    'html_baseurl': 'https://csr.lenskit.org/'
 }
 templates_path = ['_templates']
 
 intersphinx_mapping = {
-    'python': ('https://docs.python.org/3/', None)
+    'python': ('https://docs.python.org/3/', None),
+    'numpy': ('https://docs.scipy.org/doc/numpy/', None),
+    'scipy': ('https://docs.scipy.org/doc/scipy/reference/', None),
 }
 
 autodoc_default_options = {
-    'members': True,
     'member-order': 'bysource'
 }

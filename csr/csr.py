@@ -111,7 +111,7 @@ class CSR:
     @classmethod
     def from_scipy(cls, mat, copy=True):
         """
-        Convert a scipy sparse matrix to an internal CSR.
+        Convert a scipy sparse matrix to a CSR.
 
         Args:
             mat(scipy.sparse.spmatrix): a SciPy sparse matrix.
@@ -217,8 +217,6 @@ class CSR:
         """
         Get a vector of the number of nonzero entries in each row.
 
-        .. note:: This method is not available from Numba.
-
         Returns:
             numpy.ndarray: the number of nonzero entries in each row.
         """
@@ -230,8 +228,6 @@ class CSR:
 
         .. note:: The normalization *ignores* missing values instead of treating
                   them as 0.
-
-        .. note:: This method is not available from Numba.
 
         Args:
             normalization(str):
@@ -254,8 +250,6 @@ class CSR:
     def transpose(self, values=True):
         """
         Transpose a CSR matrix.
-
-        .. note:: This method is not available from Numba.
 
         Args:
             values(bool): whether to include the values in the transpose.
@@ -340,7 +334,7 @@ class CSR:
 
     def drop_values(self):
         """
-        Remove the value array from this CSR.
+        Remove the value array from this CSR.  This is an **in-place** operation.
         """
         self.R.values = EMPTY_VALUES
         self.R.has_values = False
@@ -348,7 +342,7 @@ class CSR:
     def fill_values(self, value):
         """
         Fill the values of this CSR with the specified value.  If the CSR is
-        structure-only, a value array is added.
+        structure-only, a value array is added.  This is an **in-place** operation.
         """
         self.R.values = np.full(self.nnz, value, dtype='float64')
         self.R.has_values = True
