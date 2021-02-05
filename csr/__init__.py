@@ -3,5 +3,5 @@ __all__ = [
     'CSR'
 ]
 
-from .csr import CSR
 from .layout import _CSR  # noqa: F401
+from .csr import CSR
