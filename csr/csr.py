@@ -312,6 +312,10 @@ class CSR:
         Returns
             CSR: the product of the two matrices.
         """
+        if transpose:
+            assert other.ncols == self.ncols
+        else:
+            assert other.nrows == self.nrows
 
         K = get_kernel()
         with releasing(K.to_handle(self.R), K) as a_h:
@@ -335,6 +339,7 @@ class CSR:
         Returns:
             numpy.ndarray: :math:`A\\vec{x}`, as a vector.
         """
+        assert v.shape == (self.ncols,)
         K = get_kernel()
         with releasing(K.to_handle(self.R), K) as h:
             return K.mult_vec(h, v)

@@ -24,6 +24,8 @@ def to_handle(csr):
     """
     Convert a native CSR to a handle.  The caller must arrange for the CSR last at
     least as long as the handle.  The handle must be explicitly released.
+
+    Handles are opaque as far as callers are concerned.
     """
     return csr
 

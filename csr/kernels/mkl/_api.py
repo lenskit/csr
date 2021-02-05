@@ -1,6 +1,7 @@
 from types import BuiltinFunctionType
 import numba.types as nt
 from numba.core.typing.cffi_utils import register_module, register_type
+from numba import njit
 
 from . import _mkl_ops
 

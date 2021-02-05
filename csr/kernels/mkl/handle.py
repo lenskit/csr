@@ -1,35 +1,52 @@
 import numpy as np
 from numba import njit
+import numba.types as nt
+from numba.experimental import jitclass
 
 from csr import _CSR
 from ._api import *
 
 __all__ = [
+    'mkl_h',
     'to_handle',
     'from_handle',
     'release_handle'
 ]
 
 
+@jitclass([
+    ('H', nt.intp),
+    ('nrows', nt.intc),
+    ('ncols', nt.intc),
+    ('values', nt.float64[::1])
+])
+class mkl_h:
+    """
+    Type for MKL handles.  Do not use this directly.
+    """
+    def __init__(self, H, nrows, ncols, vs):
+        self.H = H
+        self.nrows = nrows
+        self.ncols = ncols
+        self.values = vs
+
+
 @njit
-def to_handle(csr):
-    """
-    Convert a native CSR to a handle.  The caller must arrange for the CSR last at
-    least as long as the handle.  The handle must be explicitly released.
-    """
+def to_handle(csr: _CSR) -> mkl_h:
     _sp = ffi.from_buffer(csr.rowptrs)
     _cols = ffi.from_buffer(csr.colinds)
-    _vals = ffi.from_buffer(csr.values)
-    return lk_mkl_spcreate(csr.nrows, csr.ncols, _sp, _cols, _vals)
+    if csr.has_values:
+        vs = csr.values
+    else:
+        vs = np.ones(csr.nnz)
+    _vals = ffi.from_buffer(vs)
+    h = lk_mkl_spcreate(csr.nrows, csr.ncols, _sp, _cols, _vals)
+    return mkl_h(h, csr.nrows, csr.ncols, vs)
 
 
 @njit
-def from_handle(h):
-    """
-    Convert a handle to a CSR.  The handle may be released after this is called.
-    """
-
-    rvp = lk_mkl_spexport_p(h)
+def from_handle(h: mkl_h) -> _CSR:
+    rvp = lk_mkl_spexport_p(h.H)
     if rvp is None:
         return None
 
@@ -64,8 +81,6 @@ def from_handle(h):
 
 
 @njit
-def release_handle(h):
-    """
-    Release a handle.
-    """
-    lk_mkl_spfree(h)
+def release_handle(h: mkl_h):
+    lk_mkl_spfree(h.H)
+    h.H = 0
