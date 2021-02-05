@@ -31,11 +31,11 @@ class _CSR:
         nnz(int): the number of nonzero entries
         rowptrs(numpy.ndarray): starting position of each row (length ``nrows + 1``)
         colinds(numpy.ndarray): column indices (length ``nnz``)
+        has_values(bool):
+            Whether or not this matrix has values, or only stores the structure.
         values(numpy.ndarray):
             matrix cell values (length ``nnz`` or 0). If only the matrix structure
             is stored, this has length 0.
-        has_values(bool):
-            Whether or not this matrix has values.
     """
     def __init__(self, nrows, ncols, nnz, rowptrs, colinds, values):
         self.nrows = nrows
