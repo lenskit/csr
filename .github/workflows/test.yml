@@ -38,10 +38,11 @@ jobs:
 
     - name: Set up dependencies
       run: |
-        conda install -c conda-forge flit-core packaging
+        conda install -c conda-forge flit-core packaging pyyaml
         python envtool.py -n base -E mkl --python-version ${{matrix.python}} --save-env environment.yml
         cat environment.yml
-        conda env update -n base -f environment.yml
+        conda env update -q -n base -f environment.yml
+        conda list
 
     - name: Compile MKL helper
       run: |
