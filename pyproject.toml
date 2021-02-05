@@ -1,2 +1,42 @@
 [build-system]
-requires = ["setuptools", "wheel"]
+requires = ["flit_core >=2,<4"]
+build-backend = "flit_core.buildapi"
+
+[tool.flit.metadata]
+module = "csr"
+author = "Michael Ekstrand <michaelekstrand@boisestate.edu>"
+author-email = "michaelekstrand@boisestate.edu"
+home-page = "https://csr.lenskit.org"
+classifiers = ["License :: OSI Approved :: MIT License"]
+description-file = "README.md"
+requires-python = ">= 3.6.1"
+requires = [
+    "numba >= 0.45",
+    "numpy >= 1.16",
+    "scipy",
+    "cffi >= 1.12.2"
+]
+
+[tool.flit.metadata.requires-extra]
+test = [
+    "pytest >= 3.9",
+    "pytest-doctestplus",
+    "pytest-benchmark",
+    "pytest-cov",
+    "hypothesis"
+]
+dev = [
+    "flake8",
+    "rstcheck"
+]
+doc = [
+    "sphinx",
+    "sphinx_rtd_theme"
+]
+
+[tools.flit.sdist]
+include = ["tests/*"]
+exclude = [
+    ".github",
+    "*.ipynb"
+]
