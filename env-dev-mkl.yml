@@ -11,6 +11,7 @@ dependencies:
 - pytest
 - pytest-doctestplus
 - pytest-cov
+- pytest-benchmark
 - hypothesis
 - cffi
 - mkl
