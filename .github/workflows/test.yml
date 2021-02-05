@@ -53,7 +53,7 @@ jobs:
       run: |
         python -m pytest --cov=csr
 
-    - name: Run tests without coverage
+    - name: Run tests without JIT
       run: |
         python -m pytest --cov=csr --cov-append --log-file=test-nojit.log --hypothesis-profile=nojit
       env:
