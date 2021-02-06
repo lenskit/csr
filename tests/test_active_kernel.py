@@ -7,6 +7,13 @@ def test_get_default():
     assert k is not None
     assert k is default_kernel
 
+    # make sure the default is right
+    try:
+        import csr.kernels.mkl  # noqa: F401
+        assert k.__name__ == 'csr.kernels.mkl'
+    except ImportError:
+        assert k.__name__ == 'csr.kernels.numba'
+
 
 def test_get_scipy():
     k = get_kernel('scipy')
