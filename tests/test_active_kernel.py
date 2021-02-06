@@ -1,4 +1,5 @@
-from csr.kernels import default_kernel, get_kernel, use_kernel
+from csr.kernels import _default_kernel, get_kernel, use_kernel
+default_kernel = _default_kernel()
 
 
 def test_get_default():
