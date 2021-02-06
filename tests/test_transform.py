@@ -1,4 +1,5 @@
 import numpy as np
+import scipy.sparse as sps
 
 from csr import CSR
 from csr.test_utils import csrs, csr_slow, sparse_matrices
@@ -7,6 +8,26 @@ from pytest import mark, approx, raises
 from hypothesis import given, assume, settings, HealthCheck
 import hypothesis.strategies as st
 import hypothesis.extra.numpy as nph
+
+
+@csr_slow()
+@given(st.data())
+def test_subset_rows(data):
+    nrows = data.draw(st.integers(5, 100))
+    ncols = data.draw(st.integers(1, 100))
+    dens = data.draw(st.floats(0, 1))
+    beg = data.draw(st.integers(0, nrows - 1))
+    end = data.draw(st.integers(beg, nrows - 1))
+
+    spm = sps.random(nrows, ncols, dens, format='csr')
+    csr = CSR.from_scipy(spm)
+
+    m2 = csr.subset_rows(beg, end)
+    assert m2.nrows == end - beg
+
+    for i in range(m2.nrows):
+        assert all(m2.row_cs(i) == csr.row_cs(beg+i))
+        assert all(m2.row_vs(i) == csr.row_vs(beg+i))
 
 
 @csr_slow()

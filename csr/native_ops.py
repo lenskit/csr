@@ -169,6 +169,9 @@ def transpose(csr, include_values):
         brp[i] = brp[i-1]
     brp[0] = 0
 
+    if not include_values or not csr.has_values:
+        bvs = None
+
     return _CSR(csr.ncols, csr.nrows, csr.nnz, brp, bci, bvs)
 
 

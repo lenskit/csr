@@ -195,7 +195,7 @@ class CSR:
         """
         Subset the rows in this matrix.
         """
-        return CSR(N=_ops._subset_rows(self.R, begin, end))
+        return CSR(R=_ops.subset_rows(self.R, begin, end))
 
     def rowinds(self) -> np.ndarray:
         """
@@ -402,6 +402,4 @@ class CSR:
         rps = state['rowptrs']
         cis = state['colinds']
         vs = state['values']
-        if vs is None:
-            vs = EMPTY_VALUES
         self.R = _CSR(nrows, ncols, nnz, rps, cis, vs)
