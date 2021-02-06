@@ -8,13 +8,6 @@ import numpy as np
 from scipy.sparse import csr_matrix
 from csr import CSR, _CSR
 
-__all__ = [
-    'to_handle',
-    'from_handle',
-    'release_handle',
-    'mult_ab'
-]
-
 
 def to_handle(csr: _CSR):
     values = csr.values if csr.has_values else np.ones(csr.nnz)
@@ -25,6 +18,10 @@ def from_handle(h):
     m: csr_matrix = h.tocsr()
     nr, nc = m.shape
     return _CSR(nr, nc, m.nnz, m.indptr, m.indices, m.data)
+
+
+def order_columns(h):
+    h.sort_indices()
 
 
 def release_handle(h):

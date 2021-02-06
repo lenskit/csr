@@ -90,6 +90,15 @@ def from_handle(h: mkl_h) -> _CSR:
 
 
 @njit
+def order_columns(h):
+    """
+    Sort matrix rows in increasing column order.
+    """
+    if h.H:
+        lk_mkl_sporder(h.H)
+
+
+@njit
 def release_handle(h: mkl_h):
     if h.H:
         lk_mkl_spfree(h.H)

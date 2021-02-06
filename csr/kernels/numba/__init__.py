@@ -7,16 +7,8 @@ import numpy as np
 from numba import njit
 
 from csr.layout import _CSR
+import csr.native_ops as _ops
 from .multiply import mult_ab, mult_abt
-
-__all__ = [
-    'to_handle',
-    'from_handle',
-    'release_handle',
-    'mult_ab',
-    'mult_abt',
-    'mult_vec'
-]
 
 
 @njit
@@ -45,6 +37,14 @@ def release_handle(h):
     Release a handle.
     """
     pass
+
+
+@njit
+def order_columns(h):
+    """
+    Sort matrix rows in increasing column order.
+    """
+    _ops.sort_rows(h)
 
 
 @njit(nogil=True)
