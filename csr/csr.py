@@ -54,8 +54,6 @@ class CSR:
             self.R = R
         else:
             assert inds.dtype == np.int32
-            if vals is None:
-                vals = EMPTY_VALUES
             self.R = _CSR(nrows, ncols, nnz, ptrs, inds, vals)
 
     @classmethod
@@ -170,6 +168,28 @@ class CSR:
                 vs = vs[:self.nnz]
             self.R.values = vs
             self.R.has_values = True
+
+    def copy(self, include_values=True, copy_structure=True):
+        """
+        Create a copy of this CSR.
+
+        Args:
+            include_values(bool): whether to copy the values or only the structure.
+            copy_structure(bool):
+                whether to copy the structure (index & pointers) or share with the original matrix.
+        """
+        values = self.values
+        if include_values and values is not None:
+            values = np.copy(values)
+        else:
+            values = None
+        rps = self.rowptrs
+        cis = self.colinds
+        if copy_structure:
+            rps = np.copy(rps)
+            cis = np.copy(cis)
+        return CSR(self.nrows, self.ncols, self.nnz,
+                   rps, cis, values)
 
     def subset_rows(self, begin, end):
         """

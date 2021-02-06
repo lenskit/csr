@@ -70,10 +70,10 @@ def row_vs(csr, row):
     sp = csr.rowptrs[row]
     ep = csr.rowptrs[row + 1]
 
-    if csr.values.size == 0:
-        return np.full(ep - sp, 1.0)
-    else:
+    if csr.has_values:
         return csr.values[sp:ep]
+    else:
+        return np.full(ep - sp, 1.0)
 
 
 @njit
@@ -94,10 +94,10 @@ def subset_rows(csr, begin, end):
     rps = csr.rowptrs[begin:(end+1)] - st
 
     cis = csr.colinds[st:ed]
-    if csr.values.size == 0:
-        vs = EMPTY_VALUES
-    else:
+    if csr.has_values:
         vs = csr.values[st:ed]
+    else:
+        vs = None
     return _CSR(end - begin, csr.ncols, ed - st, rps, cis, vs)
 
 

@@ -2,9 +2,9 @@ import numpy as np
 import scipy.sparse as sps
 
 from csr import CSR
-from csr.test_utils import csrs, csr_slow, matrices, sparse_matrices
+from csr.test_utils import csrs, matrices, sparse_matrices
 
-from pytest import mark, approx, raises
+from pytest import raises
 from hypothesis import given, assume, settings, HealthCheck
 import hypothesis.strategies as st
 import hypothesis.extra.numpy as nph
@@ -164,7 +164,6 @@ def test_csr_set_values_none():
     assert all(csr.row(3) == [0, 1, 0])
 
 
-
 @given(matrices())
 def test_csr_row_nnzs(mat):
     nrows, ncols = mat.shape
@@ -181,3 +180,66 @@ def test_csr_row_nnzs(mat):
     for i in range(nrows):
         row = mat[i, :]
         assert nnzs[i] == np.sum(row > 0)
+
+
+@given(sparse_matrices())
+def test_copy(mat):
+    "Test copying a CSR"
+    csr = CSR.from_scipy(mat)
+    c2 = csr.copy()
+
+    assert c2.nrows == csr.nrows
+    assert c2.ncols == csr.ncols
+    assert c2.nnz == csr.nnz
+    assert c2.rowptrs is not csr.rowptrs
+    assert all(c2.rowptrs == csr.rowptrs)
+    assert c2.colinds is not csr.colinds
+    assert all(c2.colinds == csr.colinds)
+    assert c2.values is not csr.values
+    assert all(c2.values == csr.values)
+
+
+@given(sparse_matrices())
+def test_copy_share(mat):
+    "Test copying a CSR and sharing structure"
+    csr = CSR.from_scipy(mat)
+    c2 = csr.copy(copy_structure=False)
+
+    assert c2.nrows == csr.nrows
+    assert c2.ncols == csr.ncols
+    assert c2.nnz == csr.nnz
+    assert c2.rowptrs is csr.rowptrs
+    assert c2.colinds is csr.colinds
+    assert c2.values is not csr.values
+    assert all(c2.values == csr.values)
+
+
+@given(sparse_matrices())
+def test_copy_structure_only(mat):
+    "Test copying only the structure of a CSV."
+    csr = CSR.from_scipy(mat)
+    c2 = csr.copy(False)
+
+    assert c2.nrows == csr.nrows
+    assert c2.ncols == csr.ncols
+    assert c2.nnz == csr.nnz
+    assert c2.rowptrs is not csr.rowptrs
+    assert all(c2.rowptrs == csr.rowptrs)
+    assert c2.colinds is not csr.colinds
+    assert all(c2.colinds == csr.colinds)
+    assert c2.values is None
+
+
+@given(csrs(values=False), st.booleans())
+def test_copy_csrnv(csr, inc):
+    "Test copying a CSR with no values."
+    c2 = csr.copy(inc)
+
+    assert c2.nrows == csr.nrows
+    assert c2.ncols == csr.ncols
+    assert c2.nnz == csr.nnz
+    assert c2.rowptrs is not csr.rowptrs
+    assert all(c2.rowptrs == csr.rowptrs)
+    assert c2.colinds is not csr.colinds
+    assert all(c2.colinds == csr.colinds)
+    assert c2.values is None

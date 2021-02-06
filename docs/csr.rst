@@ -31,6 +31,7 @@ extract row data in a more convenient form.
 Transforming and Manipulating Matrices
 --------------------------------------
 
+.. automethod:: CSR.copy
 .. automethod:: CSR.subset_rows
 .. automethod:: CSR.filter_nnzs
 .. automethod:: CSR.transpose

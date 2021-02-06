@@ -46,6 +46,7 @@ def to_handle(csr: _CSR) -> mkl_h:
         vs = np.ones(csr.nnz)
     _vals = ffi.from_buffer(vs)
     h = lk_mkl_spcreate(csr.nrows, csr.ncols, _sp, _cols, _vals)
+    lk_mkl_spopt(h)
     return mkl_h(h, csr.nrows, csr.ncols, vs)
 
 

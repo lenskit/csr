@@ -43,7 +43,7 @@ class _CSR:
         self.nnz = nnz
         self.rowptrs = rowptrs
         self.colinds = colinds
-        if values is None or values.size == 0:
+        if values is None:
             self.values = EMPTY_VALUES
             self.has_values = False
         else:
