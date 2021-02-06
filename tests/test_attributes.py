@@ -107,6 +107,64 @@ def test_fill_values(csr, x):
     assert all(csr.values == x)
 
 
+def test_csr_set_values():
+    rows = np.array([0, 0, 1, 3], dtype=np.int32)
+    cols = np.array([1, 2, 0, 1], dtype=np.int32)
+    vals = np.arange(4, dtype=np.float_)
+
+    csr = CSR.from_coo(rows, cols, vals)
+
+    v2 = np.random.randn(4)
+    csr.values = v2
+
+    assert all(csr.values == v2)
+
+
+def test_csr_set_values_oversize():
+    rows = np.array([0, 0, 1, 3], dtype=np.int32)
+    cols = np.array([1, 2, 0, 1], dtype=np.int32)
+    vals = np.arange(4, dtype=np.float_)
+
+    csr = CSR.from_coo(rows, cols, vals)
+
+    v2 = np.random.randn(6)
+    csr.values = v2
+
+    assert csr.values is not None
+    assert csr.R.has_values
+    assert all(csr.values == v2[:4])
+
+
+def test_csr_set_values_undersize():
+    rows = np.array([0, 0, 1, 3], dtype=np.int32)
+    cols = np.array([1, 2, 0, 1], dtype=np.int32)
+    vals = np.arange(4, dtype=np.float_)
+
+    csr = CSR.from_coo(rows, cols, vals)
+
+    v2 = np.random.randn(3)
+
+    with raises(ValueError):
+        csr.values = v2
+
+    assert all(csr.values == vals)
+
+
+def test_csr_set_values_none():
+    rows = np.array([0, 0, 1, 3], dtype=np.int32)
+    cols = np.array([1, 2, 0, 1], dtype=np.int32)
+    vals = np.arange(4, dtype=np.float_)
+
+    csr = CSR.from_coo(rows, cols, vals)
+    csr.values = None
+
+    assert csr.values is None
+    assert all(csr.row(0) == [0, 1, 1])
+    assert all(csr.row(1) == [1, 0, 0])
+    assert all(csr.row(3) == [0, 1, 0])
+
+
+
 @given(matrices())
 def test_csr_row_nnzs(mat):
     nrows, ncols = mat.shape

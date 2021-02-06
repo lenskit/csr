@@ -158,6 +158,19 @@ class CSR:
     def values(self):
         return self.R.values if self.R.has_values else None
 
+    @values.setter
+    def values(self, vs: np.ndarray):
+        if vs is None:
+            self.R.values = EMPTY_VALUES
+            self.R.has_values = False
+        else:
+            if len(vs) < self.nnz:
+                raise ValueError('value array too small')
+            elif len(vs) > self.nnz:
+                vs = vs[:self.nnz]
+            self.R.values = vs
+            self.R.has_values = True
+
     def subset_rows(self, begin, end):
         """
         Subset the rows in this matrix.
