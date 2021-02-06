@@ -1,9 +1,16 @@
+import os
+import warnings
 from contextlib import contextmanager
 from importlib import import_module
 import threading
-from . import numba as default_kernel
 
 kernels = {}
+__all__ = [
+    'releasing',
+    'set_kernel',
+    'use_kernel',
+    'get_kernel',
+]
 
 
 class ActiveKernel(threading.local):
@@ -14,7 +21,7 @@ class ActiveKernel(threading.local):
     def active(self):
         kern = getattr(self, '_active', None)
         if kern is None:
-            return default_kernel
+            return _default_kernel()
         else:
             return kern
 
@@ -22,6 +29,7 @@ class ActiveKernel(threading.local):
         self._active = kern
 
 
+__cached_default = None
 __active = ActiveKernel()
 
 
@@ -87,3 +95,29 @@ def get_kernel(name=None):
         kern = import_module(mod_name)
         kernels[name] = kern
     return kern
+
+
+def _initialize(name=None):
+    global __cached_default
+    if __cached_default:
+        warnings.warn('default kernel already initialized')
+
+    if name:
+        k = import_module(f'csr.kernels.{name}')
+    elif 'CSR_KERNEL' in os.environ:
+        _env_kernel = os.environ['CSR_KERNEL']
+        k = import_module(f'csr.kernels.{_env_kernel}')
+    else:
+        try:
+            import csr.kernels.mkl as k
+        except ImportError:
+            import csr.kernels.numba as k
+
+    __cached_default = k
+
+
+def _default_kernel():
+    if not __cached_default:
+        _initialize()
+
+    return __cached_default

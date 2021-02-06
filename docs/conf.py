@@ -4,7 +4,9 @@ sys.path.insert(0, os.path.abspath('..'))
 
 import sphinx_rtd_theme
 
-import csr
+import csr, csr.kernels
+# set up the Numba kernel for documentation
+csr.kernels._initialize('numba')
 
 project = 'CSR'
 copyright = '2021 Boise State University'

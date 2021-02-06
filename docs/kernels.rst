@@ -45,3 +45,33 @@ functions.
 .. autofunction:: get_kernel
 .. autofunction:: set_kernel
 .. autofunction:: use_kernel
+
+Kernel Interface
+----------------
+
+.. py:module:: csr.kernel
+
+The :py:mod:`csr.kernel` module exposes the kernel interface.  These same functions are
+available on any kernel, including those returned by :py:func:`csr.kernels.get_kernel`.
+
+Handles
+~~~~~~~
+
+The kernel interface is built on opaque *handles*: a :py:class:`csr._CSR` needs to be
+converted to a handle with :py:func:`to_handle`, and subsequent operations use that
+handle to access the matrix.  Handles must be *explicitly* released, or they will
+generally leak memory.
+
+Kernels must be created from the underlying native representation — you cannot directly pass
+an instance of :py:class:`csr.CSR`.
+
+.. autofunction:: to_handle
+.. autofunction:: from_handle
+.. autofunction:: release_handle
+
+Multiplication
+~~~~~~~~~~~~~~
+
+.. autofunction:: mult_vec
+.. autofunction:: mult_ab
+.. autofunction:: mult_abt
