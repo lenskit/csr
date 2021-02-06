@@ -69,6 +69,11 @@ an instance of :py:class:`csr.CSR`.
 .. autofunction:: from_handle
 .. autofunction:: release_handle
 
+Manipulation
+~~~~~~~~~~~~
+
+.. autofunction:: order_columns
+
 Multiplication
 ~~~~~~~~~~~~~~
 
