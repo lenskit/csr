@@ -191,6 +191,12 @@ class CSR:
         return CSR(self.nrows, self.ncols, self.nnz,
                    rps, cis, values)
 
+    def sort_rows(self):
+        """
+        Sort the rows of this matrix in column order.  This is an **in-place operation**.
+        """
+        _ops.sort_rows(self.R)
+
     def subset_rows(self, begin, end):
         """
         Subset the rows in this matrix.

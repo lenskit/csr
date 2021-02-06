@@ -30,6 +30,16 @@ def test_subset_rows(data):
         assert all(m2.row_vs(i) == csr.row_vs(beg+i))
 
 
+@given(csrs())
+def test_sort_rows(csr):
+    tv = np.ones(csr.ncols)
+    x1 = csr.mult_vec(tv)
+    csr.sort_rows()
+    assert all(all(np.diff(csr.row_cs(i)) > 0) for i in range(csr.nrows))
+    x2 = csr.mult_vec(tv)
+    assert x2 == approx(x1)
+
+
 @csr_slow()
 @given(sparse_matrices())
 def test_mean_center(spm):
