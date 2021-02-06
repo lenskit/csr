@@ -40,6 +40,7 @@ def row_extent(csr, row):
 
 @njit
 def row(csr, row):
+    "Get a row as a dense vector."
     v = np.zeros(csr.ncols)
     if csr.nnz == 0:
         return v
@@ -56,6 +57,7 @@ def row(csr, row):
 
 @njit
 def row_cs(csr, row):
+    "Get the column indices for a row."
     sp = csr.rowptrs[row]
     ep = csr.rowptrs[row + 1]
 
@@ -64,6 +66,7 @@ def row_cs(csr, row):
 
 @njit
 def row_vs(csr, row):
+    "Get the nonzero values for a row."
     sp = csr.rowptrs[row]
     ep = csr.rowptrs[row + 1]
 
@@ -75,6 +78,7 @@ def row_vs(csr, row):
 
 @njit
 def rowinds(csr):
+    "Get the row indices for the nonzero values in a matrix."
     ris = np.zeros(csr.nnz, np.intc)
     for i in range(csr.nrows):
         sp, ep = row_extent(csr, i)
