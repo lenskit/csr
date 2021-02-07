@@ -1,2 +1,2 @@
 ignore:
-- csr/kernels/build_mkl.py
+- build*.py
