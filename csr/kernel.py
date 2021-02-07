@@ -6,6 +6,7 @@ from csr.kernels import _default_kernel
 
 _kernel = _default_kernel()
 
+name = _kernel.__name__
 to_handle = _kernel.to_handle
 from_handle = _kernel.from_handle
 release_handle = _kernel.release_handle
