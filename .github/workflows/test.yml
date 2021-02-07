@@ -112,5 +112,5 @@ jobs:
       env:
         TWINE_NON_INTERACTIVE: y
         FLIT_USERNAME: __token__
-        FLIT_PASSWORD: ${{ secrets.TWINE_TOKEN }}
+        FLIT_PASSWORD: ${{ secrets.PYPI_TOKEN }}
 
