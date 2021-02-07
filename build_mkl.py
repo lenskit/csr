@@ -4,7 +4,7 @@ import warnings
 from pathlib import Path
 from cffi import FFI
 
-pkg_dir = Path(__file__).parent / 'mkl'
+pkg_dir = Path(__file__).parent / 'csr' / 'kernels' / 'mkl'
 src_path = pkg_dir / 'mkl_ops.c'
 hdr_path = pkg_dir / 'mkl_ops.h'
 

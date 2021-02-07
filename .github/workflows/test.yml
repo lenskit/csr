@@ -53,7 +53,7 @@ jobs:
 
     - name: Compile MKL helper
       run: |
-        python -m csr.kernels.build_mkl
+        python build_mkl.py
 
     - name: Run tests
       run: |
