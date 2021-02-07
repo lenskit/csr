@@ -2,7 +2,7 @@ name: Run Tests
 on:
   push:
     branches:
-      - master
+      - main
   release:
     types: [created,published]
   pull_request:
