@@ -169,7 +169,7 @@ class CSR:
             self.R.values = vs
             self.R.has_values = True
 
-    def copy(self, include_values=True, copy_structure=True):
+    def copy(self, include_values=True, *, copy_structure=True):
         """
         Create a copy of this CSR.
 
