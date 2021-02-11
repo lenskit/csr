@@ -8,6 +8,7 @@ import scipy.sparse as sps
 
 from numba import njit
 from numba.core import types
+from numba.extending import overload_attribute, overload_method
 from numba.experimental import structref
 
 from csr.kernels import get_kernel, releasing
@@ -63,6 +64,13 @@ def _csr_clear_values(self):
 @njit
 def _csr_has_values(self):
     return self.has_values
+
+
+def _row_extent(csr, row):
+    "Get the extent of a row in the matrix storage."
+    sp = csr.rowptrs[row]
+    ep = csr.rowptrs[row+1]
+    return sp, ep
 
 
 class CSR(structref.StructRefProxy):
@@ -284,7 +292,7 @@ class CSR(structref.StructRefProxy):
             tuple: ``(s, e)``, where the row occupies positions :math:`[s, e)` in the
             CSR data.
         """
-        return _ops.row_extent(self, row)
+        return _row_extent(self, row)
 
     def row_cs(self, row):
         """
@@ -455,3 +463,8 @@ structref.define_proxy(CSR, CSRType, [
 
 # import ops to solve circular import
 from csr import native_ops as _ops  # noqa: E402
+
+
+@overload_method(CSRType, 'row_extent')
+def _csr_row_extent(csr, row):
+    return _row_extent

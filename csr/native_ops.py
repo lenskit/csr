@@ -6,7 +6,7 @@ import logging
 import numpy as np
 from numba import njit, prange
 
-from .csr import CSR
+from .csr import CSR, _row_extent
 
 _log = logging.getLogger(__name__)
 
@@ -45,12 +45,7 @@ def make_unintialized(nrows, ncols, sizes):
     return CSR(nrows, ncols, nnz, rowptrs, colinds, True, values)
 
 
-@njit
-def row_extent(csr, row):
-    "Get the extent of a row in the matrix storage."
-    sp = csr.rowptrs[row]
-    ep = csr.rowptrs[row+1]
-    return sp, ep
+row_extent = njit(_row_extent)
 
 
 @njit
