@@ -6,8 +6,9 @@ import logging
 import numpy as np
 from numba import njit, prange
 
+from .csr import CSR
+
 _log = logging.getLogger(__name__)
-CSR = None  # filled in later, circular import business
 
 
 @njit

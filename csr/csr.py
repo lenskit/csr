@@ -11,7 +11,6 @@ from numba.core import types
 from numba.experimental import structref
 
 from csr.kernels import get_kernel, releasing
-from csr import native_ops as _ops
 from csr.layout import EMPTY_VALUES, _CSR
 
 
@@ -467,4 +466,6 @@ structref.define_proxy(CSR, CSRType, [
     'rowptrs', 'colinds',
     'has_values', 'values'
 ])
-_ops.CSR = CSR
+
+# import ops to solve circular import
+from csr import native_ops as _ops  # noqa: E402
