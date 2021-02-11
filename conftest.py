@@ -28,7 +28,7 @@ def kernel(request):
 
 
 # set up profiles
-settings.register_profile('default', deadline=756)
+settings.register_profile('default', deadline=1000)
 settings.register_profile('large', max_examples=5000)
 settings.register_profile('fast', max_examples=10, deadline=None)
 settings.register_profile('nojit', settings.get_profile('fast'),
