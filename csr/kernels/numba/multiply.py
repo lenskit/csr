@@ -8,7 +8,6 @@ Matrix multiplication using the SMMP algorithm [SMMP]_.
 import numpy as np
 from numba import njit
 from csr import CSR
-from csr.native_ops import transpose
 
 
 @njit(nogil=True)
@@ -54,7 +53,7 @@ def mult_abt(a_h, b_h):
     assert a_h.ncols == b_h.ncols
 
     # transpose B
-    bt_h = transpose(b_h, True)
+    bt_h = b_h.transpose(True)
     return mult_ab(a_h, bt_h)
 
 

@@ -301,13 +301,15 @@ class CSR(structref.StructRefProxy):
         """
         Sort the rows of this matrix in column order.  This is an **in-place operation**.
         """
-        _ops.sort_rows(self)
+        from .structure import sort_rows
+        sort_rows(self)
 
     def subset_rows(self, begin, end):
         """
         Subset the rows in this matrix.
         """
-        return _ops.subset_rows(self, begin, end)
+        from .structure import subset_rows
+        return subset_rows(self, begin, end)
 
     def rowinds(self) -> np.ndarray:
         """
@@ -391,18 +393,18 @@ class CSR(structref.StructRefProxy):
         else:
             raise ValueError('unknown normalization: ' + normalization)
 
-    def transpose(self, values=True):
+    def transpose(self, include_values=True):
         """
         Transpose a CSR matrix.
 
         Args:
-            values(bool): whether to include the values in the transpose.
+            include_values(bool): whether to include the values in the transpose.
 
         Returns:
             CSR: the transpose of this matrix (or, equivalently, this matrix in CSC format).
         """
-
-        return _ops.transpose(self, values)
+        from .structure import transpose
+        return transpose(self, include_values)
 
     def filter_nnzs(self, filt):
         """
@@ -540,5 +542,11 @@ def _csr_row_vs(csr, row):
 @overload_method(CSRType, 'rowinds')
 def _csr_rowinds(csr, row):
     return _rowinds
+
+
+@overload_method(CSRType, 'transpose')
+def _csr_transpose(csr, include_values):
+    from .structure import transpose
+    return transpose
 
 #endregion

@@ -4,7 +4,9 @@ Routines for working with matrix structure.
 
 import numpy as np
 from numba import njit
-
+from .csr import CSR
+from . import _util
+from .constructors import create, create_novalues
 
 @njit(nogil=True)
 def _from_coo_structure(nrows, rows, cols):
@@ -63,3 +65,112 @@ def from_coo(nrows, rows, cols, values=None):
     else:
         rps, cols, vals = _from_coo_values(nrows, rows, cols, values)
     return rps, cols, vals
+
+
+def subset_rows(csr, begin, end):
+    "Take a subset of the rows of a CSR."
+    st = csr.rowptrs[begin]
+    ed = csr.rowptrs[end]
+    rps = csr.rowptrs[begin:(end + 1)] - st
+
+    cis = csr.colinds[st:ed]
+    if csr.has_values:
+        vs = csr.values[st:ed]
+    else:
+        vs = None
+    return CSR(end - begin, csr.ncols, ed - st, rps, cis, vs)
+
+
+@njit(nogil=True)
+def sort_rows(csr):
+    "Sort the rows of a CSR by increasing column index"
+    for i in range(csr.nrows):
+        sp, ep = csr.row_extent(i)
+        # bubble-sort so it's super-fast on sorted arrays
+        swapped = True
+        while swapped:
+            swapped = False
+            for j in range(sp, ep - 1):
+                if csr.colinds[j] > csr.colinds[j+1]:
+                    _util.swap(csr.colinds, j, j+1)
+                    if csr.has_values:
+                        _util.swap(csr.values, j, j+1)
+                    swapped = True
+
+
+@njit(nogil=True)
+def _transpose_values(csr):
+    "Transpose a CSR with its values."
+    brp = np.zeros(csr.ncols + 1, csr.rowptrs.dtype)
+    bci = np.zeros(csr.nnz, np.int32)
+    bvs = np.zeros(csr.nnz, np.float64)
+
+    # count elements
+    for i in range(csr.nrows):
+        ars, are = csr.row_extent(i)
+        for jj in range(ars, are):
+            j = csr.colinds[jj]
+            brp[j + 1] += 1
+
+    # convert to pointers
+    for j in range(csr.ncols):
+        brp[j+1] = brp[j] + brp[j+1]
+
+    # construct results
+    for i in range(csr.nrows):
+        ars, are = csr.row_extent(i)
+        for jj in range(ars, are):
+            j = csr.colinds[jj]
+            bci[brp[j]] = i
+            bvs[brp[j]] = csr.values[jj]
+            brp[j] += 1
+
+    # restore pointers
+    for i in range(csr.ncols - 1, 0, -1):
+        brp[i] = brp[i - 1]
+    brp[0] = 0
+
+    return create(csr.ncols, csr.nrows, csr.nnz, brp, bci, bvs)
+
+
+@njit(nogil=True)
+def _transpose_structure(csr):
+    "Transpose a CSR, structure-only."
+    brp = np.zeros(csr.ncols + 1, csr.rowptrs.dtype)
+    bci = np.zeros(csr.nnz, np.int32)
+
+    # count elements
+    for i in range(csr.nrows):
+        ars, are = csr.row_extent(i)
+        for jj in range(ars, are):
+            j = csr.colinds[jj]
+            brp[j + 1] += 1
+
+    # convert to pointers
+    for j in range(csr.ncols):
+        brp[j + 1] = brp[j] + brp[j+1]
+
+    # construct results
+    for i in range(csr.nrows):
+        ars, are = csr.row_extent(i)
+        for jj in range(ars, are):
+            j = csr.colinds[jj]
+            bci[brp[j]] = i
+            brp[j] += 1
+
+    # restore pointers
+    for i in range(csr.ncols - 1, 0, -1):
+        brp[i] = brp[i - 1]
+    brp[0] = 0
+
+    return create_novalues(csr.ncols, csr.nrows, csr.nnz, brp, bci)
+
+
+def transpose(csr, include_values):
+    if csr.values is None:
+        include_values = False
+
+    if include_values:
+        return _transpose_values(csr)
+    else:
+        return _transpose_structure(csr)
