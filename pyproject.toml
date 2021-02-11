@@ -37,6 +37,9 @@ profile = [
     "seaborn",
     "pandas >=1.0"
 ]
+mkl = [
+    "cffi"
+]
 
 [tool.flit.sdist]
 include = ["tests/*"]
