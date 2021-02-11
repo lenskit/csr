@@ -25,6 +25,16 @@ def make_empty(nrows, ncols):
 
 
 @njit
+def make_structure(nrows, ncols, nnz, rowptrs, colinds):
+    return CSR(nrows, ncols, nnz, rowptrs, colinds, False, np.zeros(0))
+
+
+@njit
+def make_complete(nrows, ncols, nnz, rowptrs, colinds, values):
+    return CSR(nrows, ncols, nnz, rowptrs, colinds, True, values)
+
+
+@njit
 def make_unintialized(nrows, ncols, sizes):
     nnz = np.sum(sizes)
     rowptrs = np.zeros(nrows + 1, dtype=np.intc)
@@ -175,9 +185,9 @@ def transpose(csr, include_values):
     brp[0] = 0
 
     if not include_values or not csr.has_values:
-        bvs = None
-
-    return CSR(csr.ncols, csr.nrows, csr.nnz, brp, bci, bvs)
+        return make_structure(csr.ncols, csr.nrows, csr.nnz, brp, bci)
+    else:
+        return make_complete(csr.ncols, csr.nrows, csr.nnz, brp, bci, bvs)
 
 
 @njit(nogil=True)
