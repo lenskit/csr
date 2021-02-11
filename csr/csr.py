@@ -81,27 +81,22 @@ class CSR(structref.StructRefProxy):
     * The value array, if present, is always double-precision.
 
     You generally don't want to create this class yourself with the constructor.  Instead, use one
-    of its class methods.
+    of its class or static methods.
 
-    It is backed by separate storage type (py:class:`csr._CSR`) that can be passed around through
-    Numba-compiled functions, and nopython compiled equivalents of many of its methods
-    are available as functions in the :py:mod:`csr.native_ops` module that take the
-    underlying tuple (accessible by :py:attr:`R`) as a parameter.
-
-    If you need to pass an instance off to a Numba-compiled function, use :py:attr:`R`::
-
-        _some_numba_fun(csr.R)
+    This class, with its attributes and several of its methods, is also usable from Numba (it is a
+    proxy for a Numba StructRef).  When used from Numba, :py:attr:`values` is always present, but
+    has length 0 when there is no value array.  Use the :py:attr:`has_values` attribute to check
+    for its presence.
 
     Attributes:
-        R(_CSR): the named tuple containing the actual matrix data
         nrows(int): the number of rows.
         ncols(int): the number of columns.
         nnz(int): the number of entries.
         rowptrs(numpy.ndarray): the row pointers.
         colinds(numpy.ndarray): the column indices.
-        values(numpy.ndarray or None): the values
+        has_values(bool): whether the array has values.
+        values(numpy.ndarray or None): the values.
     """
-    __slots__ = ['R']
 
     def __new__(cls, nrows, ncols, nnz, ptrs, inds, vals):
         if vals is None:
@@ -125,9 +120,9 @@ class CSR(structref.StructRefProxy):
         """
         if row_nnzs is not None:
             assert len(row_nnzs) == nrows
-            return cls(R=_ops.make_unintialized(nrows, ncols, row_nnzs))
+            return _ops.make_unintialized(nrows, ncols, row_nnzs)
         else:
-            return cls(R=_ops.make_empty(nrows, ncols))
+            return _ops.make_empty(nrows, ncols)
 
     @classmethod
     def from_coo(cls, rows, cols, vals, shape=None, rpdtype=np.intc):
@@ -207,6 +202,7 @@ class CSR(structref.StructRefProxy):
     nnz = _csr_delegate('nnz')
     rowptrs = _csr_delegate('rowptrs')
     colinds = _csr_delegate('colinds')
+    has_values = property(_csr_has_values)
 
     @property
     def values(self):
@@ -471,3 +467,4 @@ structref.define_proxy(CSR, CSRType, [
     'rowptrs', 'colinds',
     'has_values', 'values'
 ])
+_ops.CSR = CSR

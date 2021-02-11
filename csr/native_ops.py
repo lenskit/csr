@@ -6,9 +6,8 @@ import logging
 import numpy as np
 from numba import njit, prange
 
-from .layout import _CSR, EMPTY_VALUES
-
 _log = logging.getLogger(__name__)
+CSR = None  # filled in later, circular import business
 
 
 @njit
@@ -21,7 +20,7 @@ def make_empty(nrows, ncols):
     rowptrs = np.zeros(nrows + 1, dtype=np.intc)
     colinds = np.zeros(0, dtype=np.intc)
     values = np.zeros(0)
-    return _CSR(nrows, ncols, 0, rowptrs, colinds, values)
+    return CSR(nrows, ncols, 0, rowptrs, colinds, True, values)
 
 
 @njit
@@ -32,7 +31,7 @@ def make_unintialized(nrows, ncols, sizes):
         rowptrs[i+1] = rowptrs[i] + sizes[i]
     colinds = np.full(nnz, -1, dtype=np.intc)
     values = np.full(nnz, np.nan)
-    return _CSR(nrows, ncols, nnz, rowptrs, colinds, values)
+    return CSR(nrows, ncols, nnz, rowptrs, colinds, True, values)
 
 
 @njit
@@ -103,7 +102,7 @@ def subset_rows(csr, begin, end):
         vs = csr.values[st:ed]
     else:
         vs = None
-    return _CSR(end - begin, csr.ncols, ed - st, rps, cis, vs)
+    return CSR(end - begin, csr.ncols, ed - st, rps, cis, csr.has_values, vs)
 
 
 @njit(nogil=True)
@@ -177,7 +176,7 @@ def transpose(csr, include_values):
     if not include_values or not csr.has_values:
         bvs = None
 
-    return _CSR(csr.ncols, csr.nrows, csr.nnz, brp, bci, bvs)
+    return CSR(csr.ncols, csr.nrows, csr.nnz, brp, bci, bvs)
 
 
 @njit(nogil=True)

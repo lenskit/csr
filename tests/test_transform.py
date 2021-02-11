@@ -47,7 +47,6 @@ def test_kernel_sort_rows(kernel, csr):
     h = kernel.to_handle(csr.R)
     kernel.order_columns(h)
     c2 = kernel.from_handle(h)
-    c2 = CSR(R=c2)
     kernel.release_handle(h)
     assert all(all(np.diff(c2.row_cs(i)) > 0) for i in range(csr.nrows))
     x2 = c2.mult_vec(tv)

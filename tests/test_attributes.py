@@ -104,6 +104,7 @@ def test_drop_values(csr):
 @given(csrs(), st.floats(allow_infinity=False, allow_nan=False))
 def test_fill_values(csr, x):
     csr.fill_values(x)
+    assert csr.has_values
     assert all(csr.values == x)
 
 
@@ -158,6 +159,7 @@ def test_csr_set_values_none():
     csr.values = None
 
     assert csr.values is None
+    assert not csr.has_values
     assert all(csr.row(0) == [0, 1, 1])
     assert all(csr.row(1) == [1, 0, 0])
     assert all(csr.row(3) == [0, 1, 0])
@@ -226,6 +228,7 @@ def test_copy_structure_only(mat):
     assert all(c2.rowptrs == csr.rowptrs)
     assert c2.colinds is not csr.colinds
     assert all(c2.colinds == csr.colinds)
+    assert not c2.has_values
     assert c2.values is None
 
 
