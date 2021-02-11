@@ -72,15 +72,19 @@ class CSR(_csr_base):
         assert nrows <= INTC.max
         assert ncols >= INTC.min
         assert ncols <= INTC.max
-        nrows = np.intc(nrows)
-        ncols = np.intc(ncols)
-        if cast:
-            cis = np.require(cis, np.intc, 'C')
-            if nnz <= INTC.max:
-                rps = np.require(rps, np.intc, 'C')
-            if vs is not None:
-                vs = np.require(vs, requirements='C')
-        return _csr_base.__new__(cls, nrows, ncols, nnz, rps, cis, vs)
+        if NUMBA_ENABLED:
+            nrows = np.intc(nrows)
+            ncols = np.intc(ncols)
+            if cast:
+                cis = np.require(cis, np.intc, 'C')
+                if nnz <= INTC.max:
+                    rps = np.require(rps, np.intc, 'C')
+                if vs is not None:
+                    vs = np.require(vs, requirements='C')
+            return _csr_base.__new__(cls, nrows, ncols, nnz, rps, cis, vs)
+        else:
+            return _csr_base.__init__
+
 
     @classmethod
     def empty(cls, nrows, ncols, row_nnzs=None, values=True):
