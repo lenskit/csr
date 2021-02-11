@@ -1,11 +1,10 @@
 import numpy as np
 from numba import njit
-import numba.types as nt
 from numba.core.types import StructRef
 from numba.experimental import structref
 
 from csr import CSR
-from ._api import *
+from ._api import *  # noqa: F403
 from csr.constructors import create_empty
 
 __all__ = [

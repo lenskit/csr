@@ -7,7 +7,6 @@ import numpy as np
 import scipy.sparse as sps
 
 from numba import config
-from numba.extending import overload_method
 from numba.experimental import structref
 
 from csr.kernels import get_kernel, releasing
