@@ -6,7 +6,7 @@ Kernel implementing matrix operations in pure Numba.
 import numpy as np
 from numba import njit
 
-from csr.layout import _CSR
+from csr import CSR
 import csr.native_ops as _ops
 from .multiply import mult_ab, mult_abt
 
@@ -48,7 +48,7 @@ def order_columns(h):
 
 
 @njit(nogil=True)
-def mult_vec(h: _CSR, v):
+def mult_vec(h: CSR, v):
     res = np.zeros(h.nrows)
 
     row = 0
