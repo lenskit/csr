@@ -125,59 +125,6 @@ def _rowinds(csr):
 #endregion
 
 ###################################################
-#region CSR constructors
-
-@njit
-def create_empty(nrows, ncols):
-    """
-    Create an empty CSR of the specified size.
-
-    .. note:: This function can be used from Numba.
-    """
-    rowptrs = np.zeros(nrows + 1, dtype=np.intc)
-    colinds = np.zeros(0, dtype=np.intc)
-    values = np.zeros(0)
-    return CSR(np.int32(nrows), np.int32(ncols), 0, rowptrs, colinds, True, values)
-
-
-@njit
-def create_novalues(nrows, ncols, nnz, rowptrs, colinds):
-    """
-    Create a CSR without values.
-    """
-    return CSR(nrows, ncols, nnz, rowptrs, colinds, False, np.zeros(0))
-
-
-@njit
-def create(nrows, ncols, nnz, rowptrs, colinds, values):
-    """
-    Create a CSR.
-    """
-    return CSR(nrows, ncols, nnz, rowptrs, colinds, True, values)
-
-
-@njit
-def create_from_sizes(nrows, ncols, sizes):
-    """
-    Create a CSR with uninitialized values and specified row sizes.
-
-    Args:
-        nrows(int): the number of rows
-        ncols(int): the number of columns
-        sizes(numpyp.ndarray): the number of nonzero values in each row
-    """
-    nnz = np.sum(sizes)
-    rowptrs = np.zeros(nrows + 1, dtype=np.intc)
-    for i in range(nrows):
-        rowptrs[i+1] = rowptrs[i] + sizes[i]
-    colinds = np.full(nnz, -1, dtype=np.intc)
-    values = np.full(nnz, np.nan)
-    return CSR(nrows, ncols, nnz, rowptrs, colinds, True, values)
-
-#endregion
-
-
-###################################################
 #region Structure helpers
 
 
@@ -248,6 +195,7 @@ class CSR(structref.StructRefProxy):
             row_nnzs(array-like):
                 the number of nonzero entries for each row, or None for an empty matrix.
         """
+        from .constructors import create_empty, create_from_sizes
         if row_nnzs is not None:
             assert len(row_nnzs) == nrows
             return create_from_sizes(nrows, ncols, row_nnzs)
@@ -255,7 +203,7 @@ class CSR(structref.StructRefProxy):
             return create_empty(nrows, ncols)
 
     @classmethod
-    def from_coo(cls, rows, cols, vals, shape=None, rpdtype=np.intc):
+    def from_coo(cls, rows, cols, vals, shape=None, *, rpdtype=np.intc):
         """
         Create a CSR matrix from data in COO format.
 
