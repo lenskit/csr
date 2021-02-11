@@ -7,8 +7,8 @@ import numpy as np
 from numba import njit
 
 from csr import CSR
-import csr.native_ops as _ops
-from .multiply import mult_ab, mult_abt
+from .multiply import mult_ab, mult_abt  # noqa: F401
+from ...structure import sort_rows
 
 
 @njit
@@ -44,7 +44,7 @@ def order_columns(h):
     """
     Sort matrix rows in increasing column order.
     """
-    _ops.sort_rows(h)
+    sort_rows(h)
 
 
 @njit(nogil=True)
@@ -54,7 +54,7 @@ def mult_vec(h: CSR, v):
     row = 0
     for i in range(h.nnz):
         # advance the row if necessary
-        while i == h.rowptrs[row+1]:
+        while i == h.rowptrs[row + 1]:
             row += 1
         col = h.colinds[i]
         if h.has_values:

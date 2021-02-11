@@ -8,7 +8,7 @@ import scipy.sparse as sps
 
 from numba import njit
 from numba.core import types
-from numba.extending import overload_attribute, overload_method
+from numba.extending import overload_method
 from numba.experimental import structref
 
 from csr.kernels import get_kernel, releasing
@@ -387,10 +387,11 @@ class CSR(structref.StructRefProxy):
             numpy.ndarray:
                 The normalization values for each row.
         """
+        from . import transform
         if normalization == 'center':
-            return _ops.center_rows(self)
+            return transform.center_rows(self)
         elif normalization == 'unit':
-            return _ops.unit_rows(self)
+            return transform.unit_rows(self)
         else:
             raise ValueError('unknown normalization: ' + normalization)
 

@@ -1,12 +1,10 @@
 """
-Backend implementations of Numba operations.
+Data transformation implementations.
 """
 
 import logging
 import numpy as np
 from numba import njit
-
-from .csr import CSR, _row_extent
 
 _log = logging.getLogger(__name__)
 
@@ -16,10 +14,10 @@ def center_rows(csr):
     "Mean-center the nonzero values of each row of a CSR."
     means = np.zeros(csr.nrows)
     for i in range(csr.nrows):
-        sp, ep = row_extent(csr, i)
+        sp, ep = csr.row_extent(i)
         if sp == ep:
             continue  # empty row
-        vs = row_vs(csr, i)
+        vs = csr.row_vs(i)
         m = np.mean(vs)
         means[i] = m
         csr.values[sp:ep] -= m
@@ -32,10 +30,10 @@ def unit_rows(csr):
     "Normalize the rows of a CSR to unit vectors."
     norms = np.zeros(csr.nrows)
     for i in range(csr.nrows):
-        sp, ep = row_extent(csr, i)
+        sp, ep = csr.row_extent(i)
         if sp == ep:
             continue  # empty row
-        vs = row_vs(csr, i)
+        vs = csr.row_vs(i)
         m = np.linalg.norm(vs)
         norms[i] = m
         csr.values[sp:ep] /= m
