@@ -67,7 +67,7 @@ class conda_config:
         return self.config.get('extras', {})
 
     def get_override(self, dep):
-        ovr = self.config.get('overrides')
+        ovr = self.config.get('overrides', {})
         dep_over = ovr.get(dep, {})
         if isinstance(dep_over, str):
             dep_over = {'name': dep_over}
