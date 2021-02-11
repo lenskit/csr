@@ -48,10 +48,38 @@ def load_project():
     return pyp, fc
 
 
-def conda_config(project):
-    cfg = project.get('tool', {})
-    cfg = cfg.get('envtool', {})
-    return cfg.get('conda', {})
+class conda_config:
+    def __init__(self, project):
+        cfg = project.get('tool', {})
+        cfg = cfg.get('envtool', {})
+        self.config = cfg.get('conda', {})
+
+    @property
+    def name(self):
+        return str(self.config.get('name', 'dev-env'))
+
+    @property
+    def channels(self):
+        return [str(c) for c in self.config.get('channels', [])]
+
+    @property
+    def extras(self):
+        return self.config.get('extras', {})
+
+    def get_override(self, dep):
+        ovr = self.config.get('overrides')
+        dep_over = ovr.get(dep, {})
+        if isinstance(dep_over, str):
+            dep_over = {'name': dep_over}
+        return dep_over
+
+    def source(self, dep):
+        dov = self.get_override(dep)
+        return dov.get('source', None)
+
+    def conda_name(self, dep):
+        dov = self.get_override(dep)
+        return str(dov.get('name', dep))
 
 
 def marker_env(args):
@@ -72,9 +100,7 @@ def req_active(env, req):
 
 
 def dep_str(cfg, req):
-    dep = req.name
-    map = cfg.get('rename', {})
-    dep = str(map.get(dep, dep))
+    dep = cfg.conda_name(req.name)
     if req.specifier:
         dep += f' {req.specifier}'
     return dep
@@ -82,39 +108,46 @@ def dep_str(cfg, req):
 
 def conda_env(args, pyp, flp):
     cfg = conda_config(pyp)
-    conda_extras = cfg.get('extra', {})
     mkenv = marker_env(args)
     name = args.name
     if name is None:
-        name = cfg.get('name', 'dev-env')
+        name = cfg.name
 
-    env = {'name': str(name)}
-    channels = cfg.get('channels')
-    if channels:
-        env['channels'] = [str(c) for c in channels]
+    env = {'name': name}
+    if cfg.channels:
+        env['channels'] = cfg.channels
 
     deps = []
     if args.python_version:
         deps.append(f'python ={args.python_version}')
     elif flp.metadata['requires_python']:
         deps.append('python ' + str(flp.metadata['requires_python']))
+    deps.append('pip')
 
     extras = set(['.none'])
     if not args.no_dev:
         extras |= set(['dev', 'doc', 'test'])
-    if args.extra == 'all':
-        extras |= set(flp.reqs_by_extra.keys())
-    elif args.extra:
-        extras |= set(args.extra)
+    for e in args.extra:
+        if e == 'all':
+            extras |= set(flp.reqs_by_extra.keys())
+        else:
+            extras.add(e)
+
+    pip_deps = []
 
     for e in extras:
         for req in flp.reqs_by_extra.get(e, []):
             req = Requirement(req)
             if req_active(mkenv, req):
-                deps.append(dep_str(cfg, req))
-        for cr in conda_extras.get(e, []):
+                if cfg.source(req.name) == 'pip':
+                    pip_deps.append(req)
+                else:
+                    deps.append(dep_str(cfg, req))
+        for cr in cfg.extras.get(e, []):
             deps.append(str(cr))
 
+    if pip_deps:
+        deps.append({'pip': [str(r) for r in pip_deps]})
     env['dependencies'] = deps
 
     return env
@@ -127,7 +160,7 @@ def env_command(env, cmd):
         with ef.open('w') as f:
             write_env(env, f)
         print(cmd, 'environment', ef)
-        subprocess.run(['conda', 'env', cmd, '-q', '-f', os.fspath(ef)], check=True)
+        subprocess.run(['conda', 'env', cmd, '-f', os.fspath(ef)], check=True)
 
 
 def main(args):

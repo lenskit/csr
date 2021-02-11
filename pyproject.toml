@@ -50,7 +50,7 @@ exclude = [
 name = "csr"
 channels = ["conda-forge"]
 
-[tool.envtool.conda.extra]
+[tool.envtool.conda.extras]
 mkl = [
     "mkl-devel",
     "libblas=*=*mkl",
