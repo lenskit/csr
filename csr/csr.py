@@ -125,27 +125,6 @@ def _rowinds(csr):
 #endregion
 
 ###################################################
-#region Structure helpers
-
-
-@njit(nogil=True)
-def _csr_align(rowinds, nrows, rowptrs, align):
-    rcts = np.zeros(nrows, dtype=rowptrs.dtype)
-    for r in rowinds:
-        rcts[r] += 1
-
-    rowptrs[1:] = np.cumsum(rcts)
-    rpos = rowptrs[:-1].copy()
-
-    for i in range(len(rowinds)):
-        row = rowinds[i]
-        pos = rpos[row]
-        align[pos] = i
-        rpos[row] += 1
-
-#endregion
-
-###################################################
 #region CSR class
 
 
@@ -213,6 +192,7 @@ class CSR(structref.StructRefProxy):
             vals(array-like): the data values; can be ``None``.
             shape(tuple): the array shape, or ``None`` to infer from row & column indices.
         """
+        from .structure import from_coo
         if shape is not None:
             nrows, ncols = shape
             assert np.max(rows, initial=0) < nrows
@@ -225,14 +205,7 @@ class CSR(structref.StructRefProxy):
         assert len(cols) == nnz
         assert vals is None or len(vals) == nnz
 
-        rowptrs = np.zeros(nrows + 1, dtype=rpdtype)
-        align = np.full(nnz, -1, dtype=rpdtype)
-
-        _csr_align(rows, nrows, rowptrs, align)
-
-        cols = cols[align].copy()
-        vals = vals[align].copy() if vals is not None else None
-
+        rowptrs, cols, vals = from_coo(nrows, rows, cols, vals)
         return cls(nrows, ncols, nnz, rowptrs, cols, vals)
 
     @classmethod
