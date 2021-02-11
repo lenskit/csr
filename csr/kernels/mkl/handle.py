@@ -1,7 +1,8 @@
 import numpy as np
 from numba import njit
 import numba.types as nt
-from numba.experimental import jitclass
+from numba.core.types import StructRef
+from numba.experimental import structref
 
 from csr import CSR
 from ._api import *
@@ -15,21 +16,19 @@ __all__ = [
 ]
 
 
-@jitclass([
-    ('H', nt.intp),
-    ('nrows', nt.intc),
-    ('ncols', nt.intc),
-    ('values', nt.float64[::1])
-])
-class mkl_h:
+@structref.register
+class mkl_h_type(StructRef):
+    "Internal Numba type for MKL handles"
+    pass
+
+
+class mkl_h(structref.StructRefProxy):
     """
-    Type for MKL handles.  Do not use this directly.
+    Type for MKL handles.  Opaque, do not use directly.
     """
-    def __init__(self, H, nrows, ncols, vs):
-        self.H = H
-        self.nrows = nrows
-        self.ncols = ncols
-        self.values = vs
+
+
+structref.define_proxy(mkl_h, mkl_h_type, ['H', 'nrows', 'ncols', 'values'])
 
 
 @njit

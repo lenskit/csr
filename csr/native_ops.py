@@ -21,7 +21,7 @@ def make_empty(nrows, ncols):
     rowptrs = np.zeros(nrows + 1, dtype=np.intc)
     colinds = np.zeros(0, dtype=np.intc)
     values = np.zeros(0)
-    return CSR(nrows, ncols, 0, rowptrs, colinds, True, values)
+    return CSR(np.int32(nrows), np.int32(ncols), 0, rowptrs, colinds, True, values)
 
 
 @njit
