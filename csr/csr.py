@@ -2,6 +2,7 @@
 Python API for CSR matrices.
 """
 
+import warnings
 import numpy as np
 import scipy.sparse as sps
 
@@ -221,6 +222,11 @@ class CSR(structref.StructRefProxy):
             elif len(vs) > self.nnz:
                 vs = vs[:self.nnz]
             _csr_set_values(self, vs)
+
+    @property
+    def R(self):
+        warnings.warn('.R deprecated, use CSR directly', DeprecationWarning)
+        return self
 
     def copy(self, include_values=True, *, copy_structure=True):
         """
