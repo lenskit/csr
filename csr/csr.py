@@ -14,11 +14,6 @@ from csr.kernels import get_kernel, releasing
 from csr.layout import EMPTY_VALUES, _CSR
 
 
-def _csr_delegate(name):
-    func = globals()['_csr_get_' + name]
-    return property(func)
-
-
 @structref.register
 class CSRType(types.StructRef):
     pass
@@ -196,11 +191,11 @@ class CSR(structref.StructRefProxy):
             values = np.full(self.nnz, 1.0)
         return sps.csr_matrix((values, self.colinds, self.rowptrs), shape=(self.nrows, self.ncols))
 
-    nrows = _csr_delegate('nrows')
-    ncols = _csr_delegate('ncols')
-    nnz = _csr_delegate('nnz')
-    rowptrs = _csr_delegate('rowptrs')
-    colinds = _csr_delegate('colinds')
+    nrows = property(_csr_get_nrows)
+    ncols = property(_csr_get_ncols)
+    nnz = property(_csr_get_nnz)
+    rowptrs = property(_csr_get_rowptrs)
+    colinds = property(_csr_get_colinds)
     has_values = property(_csr_has_values)
 
     @property
