@@ -131,7 +131,6 @@ def test_csr_set_values_oversize():
     csr.values = v2
 
     assert csr.values is not None
-    assert csr.R.has_values
     assert all(csr.values == v2[:4])
 
 

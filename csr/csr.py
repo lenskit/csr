@@ -5,19 +5,73 @@ Python API for CSR matrices.
 import numpy as np
 import scipy.sparse as sps
 
+from numba import njit
+from numba.core import types
+from numba.experimental import structref
+
 from csr.kernels import get_kernel, releasing
 from csr import native_ops as _ops
 from csr.layout import EMPTY_VALUES, _CSR
 
 
 def _csr_delegate(name):
-    def func(self):
-        return getattr(self.R, name)
-
+    func = globals()['_csr_get_' + name]
     return property(func)
 
 
-class CSR:
+@structref.register
+class CSRType(types.StructRef):
+    pass
+
+
+@njit
+def _csr_get_nrows(self):
+    return self.nrows
+
+
+@njit
+def _csr_get_ncols(self):
+    return self.ncols
+
+
+@njit
+def _csr_get_nnz(self):
+    return self.nnz
+
+
+@njit
+def _csr_get_rowptrs(self):
+    return self.rowptrs
+
+
+@njit
+def _csr_get_colinds(self):
+    return self.colinds
+
+
+@njit
+def _csr_get_values(self):
+    return self.values
+
+
+@njit
+def _csr_set_values(self, values):
+    self.values = values
+    self.has_values = True
+
+
+@njit
+def _csr_clear_values(self):
+    self.values = np.zeros(0)
+    self.has_values = False
+
+
+@njit
+def _csr_has_values(self):
+    return self.has_values
+
+
+class CSR(structref.StructRefProxy):
     """
     Simple compressed sparse row matrix.  This is like :py:class:`scipy.sparse.csr_matrix`, with
     a couple of useful differences:
@@ -48,13 +102,14 @@ class CSR:
     """
     __slots__ = ['R']
 
-    def __init__(self, nrows=None, ncols=None, nnz=None, ptrs=None, inds=None, vals=None, R=None):
-        if R is not None:
-            assert R.colinds.dtype == np.int32
-            self.R = R
+    def __new__(cls, nrows, ncols, nnz, ptrs, inds, vals):
+        if vals is None:
+            hv = False
+            vals = np.zeros(0)
         else:
-            assert inds.dtype == np.int32
-            self.R = _CSR(nrows, ncols, nnz, ptrs, inds, vals)
+            hv = True
+
+        return structref.StructRefProxy.__new__(cls, nrows, ncols, nnz, ptrs, inds, hv, vals)
 
     @classmethod
     def empty(cls, nrows, ncols, row_nnzs=None):
@@ -154,20 +209,18 @@ class CSR:
 
     @property
     def values(self):
-        return self.R.values if self.R.has_values else None
+        return _csr_get_values(self) if _csr_has_values(self) else None
 
     @values.setter
     def values(self, vs: np.ndarray):
         if vs is None:
-            self.R.values = EMPTY_VALUES
-            self.R.has_values = False
+            _csr_clear_values(self)
         else:
             if len(vs) < self.nnz:
                 raise ValueError('value array too small')
             elif len(vs) > self.nnz:
                 vs = vs[:self.nnz]
-            self.R.values = vs
-            self.R.has_values = True
+            _csr_set_values(self, vs)
 
     def copy(self, include_values=True, *, copy_structure=True):
         """
@@ -195,21 +248,20 @@ class CSR:
         """
         Sort the rows of this matrix in column order.  This is an **in-place operation**.
         """
-        _ops.sort_rows(self.R)
+        _ops.sort_rows(self)
 
     def subset_rows(self, begin, end):
         """
         Subset the rows in this matrix.
         """
-        return CSR(R=_ops.subset_rows(self.R, begin, end))
+        return _ops.subset_rows(self, begin, end)
 
     def rowinds(self) -> np.ndarray:
         """
         Get the row indices from this array.  Combined with :py:attr:`colinds` and
         :py:attr:`values`, this can form a COO-format sparse matrix.
         """
-        # we have to upgrade to Numba for this one - too slow in Python
-        return _ops.rowinds(self.R)
+        return _ops.rowinds(self)
 
     def row(self, row):
         """
@@ -224,7 +276,7 @@ class CSR:
                 stores matrix structure, the returned vector has 1s where the CSR
                 records an entry.
         """
-        return _ops.row(self.R, row)
+        return _ops.row(self, row)
 
     def row_extent(self, row):
         """
@@ -237,20 +289,20 @@ class CSR:
             tuple: ``(s, e)``, where the row occupies positions :math:`[s, e)` in the
             CSR data.
         """
-        return _ops.row_extent(self.R, row)
+        return _ops.row_extent(self, row)
 
     def row_cs(self, row):
         """
         Get the column indcies for the stored values of a row.
         """
-        return _ops.row_cs(self.R, row)
+        return _ops.row_cs(self, row)
 
     def row_vs(self, row):
         """
         Get the stored values of a row.  If only the matrix structure is stored, this
         returns a vector of 1s.
         """
-        return _ops.row_vs(self.R, row)
+        return _ops.row_vs(self, row)
 
     def row_nnzs(self):
         """
@@ -280,9 +332,9 @@ class CSR:
                 The normalization values for each row.
         """
         if normalization == 'center':
-            return _ops.center_rows(self.R)
+            return _ops.center_rows(self)
         elif normalization == 'unit':
-            return _ops.unit_rows(self.R)
+            return _ops.unit_rows(self)
         else:
             raise ValueError('unknown normalization: ' + normalization)
 
@@ -297,8 +349,7 @@ class CSR:
             CSR: the transpose of this matrix (or, equivalently, this matrix in CSC format).
         """
 
-        r2 = _ops.transpose(self.R, values)
-        return CSR(R=r2)
+        return _ops.transpose(self, values)
 
     def filter_nnzs(self, filt):
         """
@@ -345,8 +396,8 @@ class CSR:
             assert self.ncols == other.nrows
 
         K = get_kernel()
-        with releasing(K.to_handle(self.R), K) as a_h:
-            with releasing(K.to_handle(other.R), K) as b_h:
+        with releasing(K.to_handle(self), K) as a_h:
+            with releasing(K.to_handle(other), K) as b_h:
                 if transpose:
                     c_h = K.mult_abt(a_h, b_h)
                 else:
@@ -354,7 +405,7 @@ class CSR:
                 with releasing(c_h, K):
                     crepr = K.from_handle(c_h)
 
-        return CSR(R=crepr)
+        return crepr
 
     def mult_vec(self, v):
         """
@@ -368,23 +419,21 @@ class CSR:
         """
         assert v.shape == (self.ncols,)
         K = get_kernel()
-        with releasing(K.to_handle(self.R), K) as h:
+        with releasing(K.to_handle(self), K) as h:
             return K.mult_vec(h, v)
 
     def drop_values(self):
         """
         Remove the value array from this CSR.  This is an **in-place** operation.
         """
-        self.R.values = EMPTY_VALUES
-        self.R.has_values = False
+        _csr_clear_values(self)
 
     def fill_values(self, value):
         """
         Fill the values of this CSR with the specified value.  If the CSR is
         structure-only, a value array is added.  This is an **in-place** operation.
         """
-        self.R.values = np.full(self.nnz, value, dtype='float64')
-        self.R.has_values = True
+        _csr_set_values(self, np.full(self.nnz, value, dtype='float64'))
 
     def __str__(self):
         return '<CSR {}x{} ({} nnz)>'.format(self.nrows, self.ncols, self.nnz)
@@ -409,3 +458,10 @@ class CSR:
         cis = state['colinds']
         vs = state['values']
         self.R = _CSR(nrows, ncols, nnz, rps, cis, vs)
+
+
+structref.define_proxy(CSR, CSRType, [
+    'nrows', 'ncols', 'nnz',
+    'rowptrs', 'colinds',
+    'has_values', 'values'
+])
