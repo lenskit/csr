@@ -8,3 +8,6 @@ __all__ = [
 ]
 
 from .csr import CSR
+
+# set up the Numba wiring!
+from . import _wiring  # noqa: F401

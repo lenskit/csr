@@ -17,7 +17,7 @@ import hypothesis.extra.numpy as nph
 
 _getters = {}
 
-for __a in ['ncols', 'nrows', 'nnz', 'rowptrs', 'colinds', 'has_values', 'values']:
+for __a in ['ncols', 'nrows', 'nnz', 'rowptrs', 'colinds', 'values']:
     __env = {'njit': njit, 'defs': {}}
     exec(dedent(f'''
     @njit
@@ -41,10 +41,8 @@ def test_access_fields(csr):
     assert all(_get_attr(csr, 'rowptrs') == csr.rowptrs)
     assert all(_get_attr(csr, 'colinds') == csr.colinds)
     if csr.values is None:
-        assert not _get_attr(csr, 'has_values')
-        assert _get_attr(csr, 'values').size == 0
+        assert _get_attr(csr, 'values') is None
     else:
-        assert _get_attr(csr, 'has_values')
         assert all(_get_attr(csr, 'values') == csr.values)
 
 
@@ -97,6 +95,50 @@ def test_csr_row_cvs(csr):
 
 
 @njit
+def _transpose(csr):
+    return csr.transpose()
+
+
+@given(csrs())
+def test_transpose(csr):
+    t = _transpose(csr)
+
+    assert t.nrows == csr.ncols
+    assert t.ncols == csr.nrows
+    assert t.nnz == csr.nnz
+
+    t2 = csr.transpose()
+    assert all(t.rowptrs == t2.rowptrs)
+    assert all(t.colinds == t2.colinds)
+
+    if csr.values is not None:
+        assert t.values is not None
+        assert all(t.values == t2.values)
+    else:
+        assert t.values is None
+
+
+@njit
+def _transpose_s(csr):
+    return csr.transpose_structure()
+
+
+@given(csrs())
+def test_transpose_structure(csr):
+    t = _transpose_s(csr)
+
+    assert t.nrows == csr.ncols
+    assert t.ncols == csr.nrows
+    assert t.nnz == csr.nnz
+
+    t2 = csr.transpose()
+    assert all(t.rowptrs == t2.rowptrs)
+    assert all(t.colinds == t2.colinds)
+
+    assert t.values is None
+
+
+@njit
 def _mult(A, B, transpose):
     return A.multiply(B, transpose)
 
@@ -133,4 +175,4 @@ def test_numba_mult_vec(data):
     y = _mult_vec(A, x)
 
     assert y.shape == (A.nrows,)
-    assert y == approx(A.to_scipy() @ x)
+    assert y == approx(A.to_scipy() @ x, nan_ok=True)

@@ -18,7 +18,7 @@ def create_empty(nrows, ncols):
     rowptrs = np.zeros(nrows + 1, dtype=np.intc)
     colinds = np.zeros(0, dtype=np.intc)
     values = np.zeros(0)
-    return CSR(np.int32(nrows), np.int32(ncols), 0, rowptrs, colinds, True, values)
+    return CSR(np.int32(nrows), np.int32(ncols), 0, rowptrs, colinds, values)
 
 
 @njit
@@ -26,7 +26,7 @@ def create_novalues(nrows, ncols, nnz, rowptrs, colinds):
     """
     Create a CSR without values.
     """
-    return CSR(nrows, ncols, nnz, rowptrs, colinds, False, np.zeros(0))
+    return CSR(nrows, ncols, nnz, rowptrs, colinds, None)
 
 
 @njit
@@ -34,7 +34,7 @@ def create(nrows, ncols, nnz, rowptrs, colinds, values):
     """
     Create a CSR.
     """
-    return CSR(nrows, ncols, nnz, rowptrs, colinds, True, values)
+    return CSR(nrows, ncols, nnz, rowptrs, colinds, values)
 
 
 @njit
@@ -53,4 +53,4 @@ def create_from_sizes(nrows, ncols, sizes):
         rowptrs[i + 1] = rowptrs[i] + sizes[i]
     colinds = np.full(nnz, -1, dtype=np.intc)
     values = np.full(nnz, np.nan)
-    return CSR(nrows, ncols, nnz, rowptrs, colinds, True, values)
+    return CSR(nrows, ncols, nnz, rowptrs, colinds, values)

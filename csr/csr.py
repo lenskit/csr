@@ -6,127 +6,11 @@ import warnings
 import numpy as np
 import scipy.sparse as sps
 
-from numba import njit
-from numba.core import types
 from numba.extending import overload_method
 from numba.experimental import structref
 
 from csr.kernels import get_kernel, releasing
-
-####################################################
-#region CSR type and attribute accessors
-
-
-@structref.register
-class CSRType(types.StructRef):
-    def preprocess_fields(self, fields):
-        return tuple((name, types.unliteral(typ)) for name, typ in fields)
-
-
-@njit
-def _csr_get_nrows(self):
-    return self.nrows
-
-
-@njit
-def _csr_get_ncols(self):
-    return self.ncols
-
-
-@njit
-def _csr_get_nnz(self):
-    return self.nnz
-
-
-@njit
-def _csr_get_rowptrs(self):
-    return self.rowptrs
-
-
-@njit
-def _csr_get_colinds(self):
-    return self.colinds
-
-
-@njit
-def _csr_get_values(self):
-    return self.values
-
-
-@njit
-def _csr_set_values(self, values):
-    self.values = values
-    self.has_values = True
-
-
-@njit
-def _csr_clear_values(self):
-    self.values = np.zeros(0)
-    self.has_values = False
-
-
-@njit
-def _csr_has_values(self):
-    return self.has_values
-
-#endregion
-
-####################################################
-#region CSR access functions
-
-
-def _row_extent(csr, row):
-    "Get the extent of a row in the matrix storage."
-    sp = csr.rowptrs[row]
-    ep = csr.rowptrs[row + 1]
-    return sp, ep
-
-
-def _row(csr, row):
-    "Get a row as a dense vector."
-    v = np.zeros(csr.ncols)
-    if csr.nnz == 0:
-        return v
-
-    sp, ep = csr.row_extent(row)
-    cols = csr.colinds[sp:ep]
-    if csr.has_values > 0:
-        v[cols] = csr.values[sp:ep]
-    else:
-        v[cols] = 1
-
-    return v
-
-
-def _row_cs(csr, row):
-    "Get the column indices for a row."
-    sp, ep = csr.row_extent(row)
-    return csr.colinds[sp:ep]
-
-
-def _row_vs(csr, row):
-    "Get the nonzero values for a row."
-    sp, ep = csr.row_extent(row)
-
-    if csr.has_values:
-        return csr.values[sp:ep]
-    else:
-        return np.full(ep - sp, 1.0)
-
-
-def _rowinds(csr):
-    "Get the row indices for the nonzero values in a matrix."
-    ris = np.zeros(csr.nnz, np.intc)
-    for i in range(csr.nrows):
-        sp, ep = csr.row_extent(i)
-        ris[sp:ep] = i
-    return ris
-
-
-#endregion
-
-###################################################
-#region CSR class
+from . import _struct, _rows
 
 
 class CSR(structref.StructRefProxy):
@@ -156,13 +40,7 @@ class CSR(structref.StructRefProxy):
     """
 
     def __new__(cls, nrows, ncols, nnz, ptrs, inds, vals):
-        if vals is None:
-            hv = False
-            vals = np.zeros(0)
-        else:
-            hv = True
-
-        return structref.StructRefProxy.__new__(cls, nrows, ncols, nnz, ptrs, inds, hv, vals)
+        return structref.StructRefProxy.__new__(cls, nrows, ncols, nnz, ptrs, inds, vals)
 
     @classmethod
     def empty(cls, nrows, ncols, row_nnzs=None):
@@ -249,27 +127,31 @@ class CSR(structref.StructRefProxy):
             values = np.full(self.nnz, 1.0)
         return sps.csr_matrix((values, self.colinds, self.rowptrs), shape=(self.nrows, self.ncols))
 
-    nrows = property(_csr_get_nrows)
-    ncols = property(_csr_get_ncols)
-    nnz = property(_csr_get_nnz)
-    rowptrs = property(_csr_get_rowptrs)
-    colinds = property(_csr_get_colinds)
-    has_values = property(_csr_has_values)
+    nrows = property(_struct.get_nrows)
+    ncols = property(_struct.get_ncols)
+    nnz = property(_struct.get_nnz)
+    rowptrs = property(_struct.get_rowptrs)
+    colinds = property(_struct.get_colinds)
 
     @property
     def values(self):
-        return _csr_get_values(self) if _csr_has_values(self) else None
+        return _struct.get_values(self)
 
     @values.setter
     def values(self, vs: np.ndarray):
         if vs is None:
-            _csr_clear_values(self)
+            new = CSR(self.nrows, self.ncols, self.nnz, self.rowptrs, self.colinds, None)
         else:
             if len(vs) < self.nnz:
                 raise ValueError('value array too small')
             elif len(vs) > self.nnz:
                 vs = vs[:self.nnz]
-            _csr_set_values(self, vs)
+
+            new = CSR(self.nrows, self.ncols, self.nnz, self.rowptrs, self.colinds, vs)
+
+        # replace our internals
+        self._type = new._type
+        self._meminfo = new._meminfo
 
     @property
     def R(self):
@@ -308,6 +190,16 @@ class CSR(structref.StructRefProxy):
     def subset_rows(self, begin, end):
         """
         Subset the rows in this matrix.
+
+        .. note:: This method is not available from Numba.
+
+        Args:
+            begin(int): the first row index to include.
+            end(int): one past the last row to include.
+
+        Returns:
+            CSR: the matrix only containing a subset of the rows.  It shares storage
+                with the original matrix to the extent possible.
         """
         from .structure import subset_rows
         return subset_rows(self, begin, end)
@@ -317,7 +209,7 @@ class CSR(structref.StructRefProxy):
         Get the row indices from this array.  Combined with :py:attr:`colinds` and
         :py:attr:`values`, this can form a COO-format sparse matrix.
         """
-        return _rowinds(self)
+        return _rows.all_indices(self)
 
     def row(self, row):
         """
@@ -332,7 +224,7 @@ class CSR(structref.StructRefProxy):
                 stores matrix structure, the returned vector has 1s where the CSR
                 records an entry.
         """
-        return _row(self, row)
+        return _rows.array(self, row)
 
     def row_extent(self, row):
         """
@@ -345,20 +237,20 @@ class CSR(structref.StructRefProxy):
             tuple: ``(s, e)``, where the row occupies positions :math:`[s, e)` in the
             CSR data.
         """
-        return _row_extent(self, row)
+        return _rows.extent(self, row)
 
     def row_cs(self, row):
         """
         Get the column indcies for the stored values of a row.
         """
-        return _row_cs(self, row)
+        return _rows.cs(self, row)
 
     def row_vs(self, row):
         """
         Get the stored values of a row.  If only the matrix structure is stored, this
         returns a vector of 1s.
         """
-        return _row_vs(self, row)
+        return _rows.vs(self, row)
 
     def row_nnzs(self):
         """
@@ -403,6 +295,10 @@ class CSR(structref.StructRefProxy):
         """
         Transpose a CSR matrix.
 
+        .. note::
+            In Numba, this method takes no paramters.
+            Call :py:meth:`transpose_structure` for a structure-only transpose.
+
         Args:
             include_values(bool): whether to include the values in the transpose.
 
@@ -411,6 +307,12 @@ class CSR(structref.StructRefProxy):
         """
         from .structure import transpose
         return transpose(self, include_values)
+
+    def transpose_structure(self):
+        """
+        Tranpose the structure of a CSR matrix.  The resulting matrix has no values.
+        """
+        return self.transpose(False)
 
     def filter_nnzs(self, filt):
         """
@@ -491,15 +393,27 @@ class CSR(structref.StructRefProxy):
     def drop_values(self):
         """
         Remove the value array from this CSR.  This is an **in-place** operation.
+
+        .. warning:: This method is deprecated.
+
+        .. note:: This method is not available from Numba.
         """
-        _csr_clear_values(self)
+        warnings.warn('drop_values is deprecated', DeprecationWarning)
+        self.values = None
 
     def fill_values(self, value):
         """
         Fill the values of this CSR with the specified value.  If the CSR is
         structure-only, a value array is added.  This is an **in-place** operation.
+
+        .. warning:: This method is deprecated.
+
+        .. note:: This method is not available from Numba.
         """
-        _csr_set_values(self, np.full(self.nnz, value, dtype='float64'))
+        if self.values is not None:
+            self.values[:] = value
+        else:
+            self.values = np.full(self.nnz, value, dtype='float64')
 
     def __str__(self):
         return '<CSR {}x{} ({} nnz)>'.format(self.nrows, self.ncols, self.nnz)
@@ -516,85 +430,3 @@ class CSR(structref.StructRefProxy):
     def __reduce__(self):
         args = (self.nrows, self.ncols, self.nnz, self.rowptrs, self.colinds, self.values)
         return (CSR, args)
-
-#endregion
-
-###############################################
-#region Numba struct setup and methods
-
-
-structref.define_proxy(CSR, CSRType, [
-    'nrows', 'ncols', 'nnz',
-    'rowptrs', 'colinds',
-    'has_values', 'values'
-])
-
-
-@overload_method(CSRType, 'row_extent')
-def _csr_row_extent(csr, row):
-    return _row_extent
-
-
-@overload_method(CSRType, 'row')
-def _csr_row(csr, row):
-    return _row
-
-
-@overload_method(CSRType, 'row_cs')
-def _csr_row_cs(csr, row):
-    return _row_cs
-
-
-@overload_method(CSRType, 'row_vs')
-def _csr_row_vs(csr, row):
-    return _row_vs
-
-
-@overload_method(CSRType, 'rowinds')
-def _csr_rowinds(csr, row):
-    return _rowinds
-
-
-@overload_method(CSRType, 'transpose')
-def _csr_transpose(csr, include_values):
-    from .structure import transpose
-    return transpose
-
-
-@overload_method(CSRType, 'multiply')
-def _csr_multiply(csr, other, transpose):
-    from . import kernel
-
-    def mult(csr, other, transpose):
-        ah = kernel.to_handle(csr)
-        bh = kernel.to_handle(other)
-        if transpose:
-            ch = kernel.mult_abt(ah, bh)
-        else:
-            ch = kernel.mult_ab(ah, bh)
-
-        kernel.release_handle(bh)
-        kernel.release_handle(ah)
-
-        result = kernel.from_handle(ch)
-        kernel.release_handle(ch)
-
-        return result
-
-    return mult
-
-
-@overload_method(CSRType, 'mult_vec')
-def _csr_mult_vec(csr, x):
-    from . import kernel
-
-    def m_ax(csr, x):
-        ah = kernel.to_handle(csr)
-        y = kernel.mult_vec(ah, x)
-        kernel.release_handle(ah)
-
-        return y
-
-    return m_ax
-
-#endregion

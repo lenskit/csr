@@ -57,9 +57,6 @@ def mult_vec(h: CSR, v):
         while i == h.rowptrs[row + 1]:
             row += 1
         col = h.colinds[i]
-        if h.has_values:
-            res[row] += v[col] * h.values[i]
-        else:
-            res[row] += v[col]
+        res[row] += v[col] * h._e_value(i)
 
     return res

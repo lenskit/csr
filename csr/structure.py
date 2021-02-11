@@ -74,7 +74,7 @@ def subset_rows(csr, begin, end):
     rps = csr.rowptrs[begin:(end + 1)] - st
 
     cis = csr.colinds[st:ed]
-    if csr.has_values:
+    if csr.values is not None:
         vs = csr.values[st:ed]
     else:
         vs = None
@@ -91,10 +91,9 @@ def sort_rows(csr):
         while swapped:
             swapped = False
             for j in range(sp, ep - 1):
-                if csr.colinds[j] > csr.colinds[j+1]:
-                    _util.swap(csr.colinds, j, j+1)
-                    if csr.has_values:
-                        _util.swap(csr.values, j, j+1)
+                if csr.colinds[j] > csr.colinds[j + 1]:
+                    _util.maybe_swap(csr.colinds, j, j + 1)
+                    _util.maybe_swap(csr.values, j, j + 1)
                     swapped = True
 
 

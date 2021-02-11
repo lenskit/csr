@@ -10,7 +10,9 @@ from csr import CSR
 
 
 def to_handle(csr: CSR):
-    values = csr.values if csr.has_values else np.ones(csr.nnz)
+    values = csr.values
+    if values is None:
+        values = np.ones(csr.nnz)
     return csr_matrix((values, csr.colinds, csr.rowptrs), (csr.nrows, csr.ncols))
 
 
