@@ -6,10 +6,10 @@ benchmarking CSR operations.
 
 import numpy as np
 from scipy.sparse import csr_matrix
-from csr import CSR, _CSR
+from csr import CSR
 
 
-def to_handle(csr: _CSR):
+def to_handle(csr: CSR):
     values = csr.values if csr.has_values else np.ones(csr.nnz)
     return csr_matrix((values, csr.colinds, csr.rowptrs), (csr.nrows, csr.ncols))
 
@@ -17,7 +17,7 @@ def to_handle(csr: _CSR):
 def from_handle(h):
     m: csr_matrix = h.tocsr()
     nr, nc = m.shape
-    return _CSR(nr, nc, m.nnz, m.indptr, m.indices, m.data)
+    return CSR(nr, nc, m.nnz, m.indptr, m.indices, m.data)
 
 
 def order_columns(h):
