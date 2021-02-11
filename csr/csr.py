@@ -13,6 +13,8 @@ from numba.experimental import structref
 from csr.kernels import get_kernel, releasing
 from . import _struct, _rows
 
+INTC = np.iinfo(np.intc)
+
 # ugly hack for a bug on Numba < 0.53
 if config.DISABLE_JIT:
     class _csr_base:
@@ -66,6 +68,21 @@ class CSR(_csr_base):
         values(numpy.ndarray or None): the values.
     """
 
+    def __new__(cls, nrows, ncols, nnz, rps, cis, vs, cast=True):
+        assert nrows >= INTC.min
+        assert nrows <= INTC.max
+        assert ncols >= INTC.min
+        assert ncols <= INTC.max
+        nrows = np.intc(nrows)
+        ncols = np.intc(ncols)
+        if cast:
+            cis = np.require(cis, np.intc, 'C')
+            if nnz <= INTC.max:
+                rps = np.require(rps, np.intc, 'C')
+            if vs is not None:
+                vs = np.require(vs, requirements='C')
+        return _csr_base.__new__(cls, nrows, ncols, nnz, rps, cis, vs)
+
     @classmethod
     def empty(cls, nrows, ncols, row_nnzs=None):
         """
@@ -80,6 +97,8 @@ class CSR(_csr_base):
         from .constructors import create_empty, create_from_sizes
         if row_nnzs is not None:
             assert len(row_nnzs) == nrows
+            if nrows > 0 and np.max(row_nnzs) <= INTC.max:
+                row_nnzs = np.require(row_nnzs, np.intc)
             return create_from_sizes(nrows, ncols, row_nnzs)
         else:
             return create_empty(nrows, ncols)
@@ -473,5 +492,5 @@ class CSR(_csr_base):
         return repr
 
     def __reduce__(self):
-        args = (self.nrows, self.ncols, self.nnz, self.rowptrs, self.colinds, self.values)
+        args = (self.nrows, self.ncols, self.nnz, self.rowptrs, self.colinds, self.values, False)
         return (CSR, args)

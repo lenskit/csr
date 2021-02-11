@@ -15,6 +15,8 @@ def create_empty(nrows, ncols):
 
     .. note:: This function can be used from Numba.
     """
+    nrows = np.int32(nrows)
+    ncols = np.int32(ncols)
     rowptrs = np.zeros(nrows + 1, dtype=np.intc)
     colinds = np.zeros(0, dtype=np.intc)
     values = np.zeros(0)
@@ -26,6 +28,8 @@ def create_novalues(nrows, ncols, nnz, rowptrs, colinds):
     """
     Create a CSR without values.
     """
+    nrows = np.int32(nrows)
+    ncols = np.int32(ncols)
     return CSR(nrows, ncols, nnz, rowptrs, colinds, None)
 
 
@@ -34,6 +38,8 @@ def create(nrows, ncols, nnz, rowptrs, colinds, values):
     """
     Create a CSR.
     """
+    nrows = np.int32(nrows)
+    ncols = np.int32(ncols)
     return CSR(nrows, ncols, nnz, rowptrs, colinds, values)
 
 
@@ -47,6 +53,8 @@ def create_from_sizes(nrows, ncols, sizes):
         ncols(int): the number of columns
         sizes(numpyp.ndarray): the number of nonzero values in each row
     """
+    nrows = np.int32(nrows)
+    ncols = np.int32(ncols)
     nnz = np.sum(sizes)
     rowptrs = np.zeros(nrows + 1, dtype=sizes.dtype)
     for i in range(nrows):

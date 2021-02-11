@@ -28,7 +28,7 @@ def test_csr_pickle(csr):
 @given(csrs())
 def test_csr64_pickle(csr):
     csr = CSR(csr.nrows, csr.ncols, csr.nnz,
-              csr.rowptrs.astype(np.int64), csr.colinds, csr.values)
+              csr.rowptrs.astype(np.int64), csr.colinds, csr.values, False)
 
     data = pickle.dumps(csr)
     csr2 = pickle.loads(data)

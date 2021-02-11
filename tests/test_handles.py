@@ -3,15 +3,14 @@ Tests for creating kernel handles.
 """
 
 from csr import CSR
-from csr.test_utils import csrs, sparse_matrices
+from csr.test_utils import csrs
 
 from hypothesis import given, settings
 
 
 @settings(deadline=5000)
-@given(sparse_matrices())
-def test_make_handle(kernel, mat):
-    csr = CSR.from_scipy(mat)
+@given(csrs())
+def test_make_handle(kernel, csr):
     h = kernel.to_handle(csr.R)
     try:
         assert h is not None
