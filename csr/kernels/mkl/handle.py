@@ -3,7 +3,7 @@ from numba import njit
 import numba.types as nt
 from numba.experimental import jitclass
 
-from csr import _CSR
+from csr import CSR
 from ._api import *
 from csr.native_ops import make_empty
 
@@ -33,7 +33,7 @@ class mkl_h:
 
 
 @njit
-def to_handle(csr: _CSR) -> mkl_h:
+def to_handle(csr: CSR) -> mkl_h:
     if csr.nnz == 0:
         # empty matrices don't really work
         return mkl_h(0, csr.nrows, csr.ncols, np.zeros(0))
@@ -51,7 +51,7 @@ def to_handle(csr: _CSR) -> mkl_h:
 
 
 @njit
-def from_handle(h: mkl_h) -> _CSR:
+def from_handle(h: mkl_h) -> CSR:
     if not h.H:
         return make_empty(h.nrows, h.ncols)
 
@@ -86,7 +86,7 @@ def from_handle(h: mkl_h) -> _CSR:
 
     lk_mkl_spe_free(rvp)
 
-    return _CSR(nrows, ncols, nnz, rowptrs, colinds, values)
+    return CSR(nrows, ncols, nnz, rowptrs, colinds, True, values)
 
 
 @njit
