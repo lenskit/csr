@@ -13,6 +13,9 @@ from numba.experimental import structref
 
 from csr.kernels import get_kernel, releasing
 
+####################################################
+#region CSR type and attribute accessors
+
 
 @structref.register
 class CSRType(types.StructRef):
@@ -65,12 +68,138 @@ def _csr_clear_values(self):
 def _csr_has_values(self):
     return self.has_values
 
+#endregion
+
+####################################################
+#region CSR access functions
+
 
 def _row_extent(csr, row):
     "Get the extent of a row in the matrix storage."
     sp = csr.rowptrs[row]
-    ep = csr.rowptrs[row+1]
+    ep = csr.rowptrs[row + 1]
     return sp, ep
+
+
+def _row(csr, row):
+    "Get a row as a dense vector."
+    v = np.zeros(csr.ncols)
+    if csr.nnz == 0:
+        return v
+
+    sp, ep = csr.row_extent(row)
+    cols = csr.colinds[sp:ep]
+    if csr.has_values > 0:
+        v[cols] = csr.values[sp:ep]
+    else:
+        v[cols] = 1
+
+    return v
+
+
+def _row_cs(csr, row):
+    "Get the column indices for a row."
+    sp, ep = csr.row_extent(row)
+    return csr.colinds[sp:ep]
+
+
+def _row_vs(csr, row):
+    "Get the nonzero values for a row."
+    sp, ep = csr.row_extent(row)
+
+    if csr.has_values:
+        return csr.values[sp:ep]
+    else:
+        return np.full(ep - sp, 1.0)
+
+
+def _rowinds(csr):
+    "Get the row indices for the nonzero values in a matrix."
+    ris = np.zeros(csr.nnz, np.intc)
+    for i in range(csr.nrows):
+        sp, ep = csr.row_extent(i)
+        ris[sp:ep] = i
+    return ris
+
+
+#endregion
+
+###################################################
+#region CSR constructors
+
+@njit
+def create_empty(nrows, ncols):
+    """
+    Create an empty CSR of the specified size.
+
+    .. note:: This function can be used from Numba.
+    """
+    rowptrs = np.zeros(nrows + 1, dtype=np.intc)
+    colinds = np.zeros(0, dtype=np.intc)
+    values = np.zeros(0)
+    return CSR(np.int32(nrows), np.int32(ncols), 0, rowptrs, colinds, True, values)
+
+
+@njit
+def create_novalues(nrows, ncols, nnz, rowptrs, colinds):
+    """
+    Create a CSR without values.
+    """
+    return CSR(nrows, ncols, nnz, rowptrs, colinds, False, np.zeros(0))
+
+
+@njit
+def create(nrows, ncols, nnz, rowptrs, colinds, values):
+    """
+    Create a CSR.
+    """
+    return CSR(nrows, ncols, nnz, rowptrs, colinds, True, values)
+
+
+@njit
+def create_from_sizes(nrows, ncols, sizes):
+    """
+    Create a CSR with uninitialized values and specified row sizes.
+
+    Args:
+        nrows(int): the number of rows
+        ncols(int): the number of columns
+        sizes(numpyp.ndarray): the number of nonzero values in each row
+    """
+    nnz = np.sum(sizes)
+    rowptrs = np.zeros(nrows + 1, dtype=np.intc)
+    for i in range(nrows):
+        rowptrs[i+1] = rowptrs[i] + sizes[i]
+    colinds = np.full(nnz, -1, dtype=np.intc)
+    values = np.full(nnz, np.nan)
+    return CSR(nrows, ncols, nnz, rowptrs, colinds, True, values)
+
+#endregion
+
+
+###################################################
+#region Structure helpers
+
+
+@njit(nogil=True)
+def _csr_align(rowinds, nrows, rowptrs, align):
+    rcts = np.zeros(nrows, dtype=rowptrs.dtype)
+    for r in rowinds:
+        rcts[r] += 1
+
+    rowptrs[1:] = np.cumsum(rcts)
+    rpos = rowptrs[:-1].copy()
+
+    for i in range(len(rowinds)):
+        row = rowinds[i]
+        pos = rpos[row]
+        align[pos] = i
+        rpos[row] += 1
+
+#endregion
+
+###################################################
+#region CSR class
 
 
 class CSR(structref.StructRefProxy):
@@ -121,9 +250,9 @@ class CSR(structref.StructRefProxy):
         """
         if row_nnzs is not None:
             assert len(row_nnzs) == nrows
-            return _ops.make_unintialized(nrows, ncols, row_nnzs)
+            return create_from_sizes(nrows, ncols, row_nnzs)
         else:
-            return _ops.make_empty(nrows, ncols)
+            return create_empty(nrows, ncols)
 
     @classmethod
     def from_coo(cls, rows, cols, vals, shape=None, rpdtype=np.intc):
@@ -151,7 +280,7 @@ class CSR(structref.StructRefProxy):
         rowptrs = np.zeros(nrows + 1, dtype=rpdtype)
         align = np.full(nnz, -1, dtype=rpdtype)
 
-        _ops._csr_align(rows, nrows, rowptrs, align)
+        _csr_align(rows, nrows, rowptrs, align)
 
         cols = cols[align].copy()
         vals = vals[align].copy() if vals is not None else None
@@ -264,7 +393,7 @@ class CSR(structref.StructRefProxy):
         Get the row indices from this array.  Combined with :py:attr:`colinds` and
         :py:attr:`values`, this can form a COO-format sparse matrix.
         """
-        return _ops.rowinds(self)
+        return _rowinds(self)
 
     def row(self, row):
         """
@@ -279,7 +408,7 @@ class CSR(structref.StructRefProxy):
                 stores matrix structure, the returned vector has 1s where the CSR
                 records an entry.
         """
-        return _ops.row(self, row)
+        return _row(self, row)
 
     def row_extent(self, row):
         """
@@ -298,14 +427,14 @@ class CSR(structref.StructRefProxy):
         """
         Get the column indcies for the stored values of a row.
         """
-        return _ops.row_cs(self, row)
+        return _row_cs(self, row)
 
     def row_vs(self, row):
         """
         Get the stored values of a row.  If only the matrix structure is stored, this
         returns a vector of 1s.
         """
-        return _ops.row_vs(self, row)
+        return _row_vs(self, row)
 
     def row_nnzs(self):
         """
@@ -371,7 +500,7 @@ class CSR(structref.StructRefProxy):
         for i in range(self.nrows):
             sp, ep = self.row_extent(i)
             rlen = np.sum(filt[sp:ep])
-            rps2[i+1] = rps2[i] + rlen
+            rps2[i + 1] = rps2[i] + rlen
 
         nnz2 = rps2[-1]
         assert nnz2 == np.sum(filt)
@@ -454,6 +583,11 @@ class CSR(structref.StructRefProxy):
         args = (self.nrows, self.ncols, self.nnz, self.rowptrs, self.colinds, self.values)
         return (CSR, args)
 
+#endregion
+
+###############################################
+#region Numba struct setup and methods
+
 
 structref.define_proxy(CSR, CSRType, [
     'nrows', 'ncols', 'nnz',
@@ -461,10 +595,29 @@ structref.define_proxy(CSR, CSRType, [
     'has_values', 'values'
 ])
 
-# import ops to solve circular import
-from csr import native_ops as _ops  # noqa: E402
-
 
 @overload_method(CSRType, 'row_extent')
 def _csr_row_extent(csr, row):
     return _row_extent
+
+
+@overload_method(CSRType, 'row')
+def _csr_row(csr, row):
+    return _row
+
+
+@overload_method(CSRType, 'row_cs')
+def _csr_row_cs(csr, row):
+    return _row_cs
+
+
+@overload_method(CSRType, 'row_vs')
+def _csr_row_vs(csr, row):
+    return _row_vs
+
+
+@overload_method(CSRType, 'rowinds')
+def _csr_rowinds(csr, row):
+    return _rowinds
+
+#endregion

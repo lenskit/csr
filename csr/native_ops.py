@@ -4,96 +4,11 @@ Backend implementations of Numba operations.
 
 import logging
 import numpy as np
-from numba import njit, prange
+from numba import njit
 
 from .csr import CSR, _row_extent
 
 _log = logging.getLogger(__name__)
-
-
-@njit
-def _swap(a, i, j):
-    a[i], a[j] = a[j], a[i]
-
-
-@njit
-def make_empty(nrows, ncols):
-    rowptrs = np.zeros(nrows + 1, dtype=np.intc)
-    colinds = np.zeros(0, dtype=np.intc)
-    values = np.zeros(0)
-    return CSR(np.int32(nrows), np.int32(ncols), 0, rowptrs, colinds, True, values)
-
-
-@njit
-def make_structure(nrows, ncols, nnz, rowptrs, colinds):
-    return CSR(nrows, ncols, nnz, rowptrs, colinds, False, np.zeros(0))
-
-
-@njit
-def make_complete(nrows, ncols, nnz, rowptrs, colinds, values):
-    return CSR(nrows, ncols, nnz, rowptrs, colinds, True, values)
-
-
-@njit
-def make_unintialized(nrows, ncols, sizes):
-    nnz = np.sum(sizes)
-    rowptrs = np.zeros(nrows + 1, dtype=np.intc)
-    for i in range(nrows):
-        rowptrs[i+1] = rowptrs[i] + sizes[i]
-    colinds = np.full(nnz, -1, dtype=np.intc)
-    values = np.full(nnz, np.nan)
-    return CSR(nrows, ncols, nnz, rowptrs, colinds, True, values)
-
-
-row_extent = njit(_row_extent)
-
-
-@njit
-def row(csr, row):
-    "Get a row as a dense vector."
-    v = np.zeros(csr.ncols)
-    if csr.nnz == 0:
-        return v
-
-    sp, ep = row_extent(csr, row)
-    cols = csr.colinds[sp:ep]
-    if csr.has_values > 0:
-        v[cols] = csr.values[sp:ep]
-    else:
-        v[cols] = 1
-
-    return v
-
-
-@njit
-def row_cs(csr, row):
-    "Get the column indices for a row."
-    sp = csr.rowptrs[row]
-    ep = csr.rowptrs[row + 1]
-
-    return csr.colinds[sp:ep]
-
-
-@njit
-def row_vs(csr, row):
-    "Get the nonzero values for a row."
-    sp = csr.rowptrs[row]
-    ep = csr.rowptrs[row + 1]
-
-    if csr.has_values:
-        return csr.values[sp:ep]
-    else:
-        return np.full(ep - sp, 1.0)
-
-
-@njit
-def rowinds(csr):
-    "Get the row indices for the nonzero values in a matrix."
-    ris = np.zeros(csr.nnz, np.intc)
-    for i in range(csr.nrows):
-        sp, ep = row_extent(csr, i)
-        ris[sp:ep] = i
-    return ris
 
 
 @njit
@@ -200,19 +115,3 @@ def sort_rows(csr):
                     if csr.has_values:
                         _swap(csr.values, j, j+1)
                     swapped = True
-
-
-@njit(nogil=True)
-def _csr_align(rowinds, nrows, rowptrs, align):
-    rcts = np.zeros(nrows, dtype=rowptrs.dtype)
-    for r in rowinds:
-        rcts[r] += 1
-
-    rowptrs[1:] = np.cumsum(rcts)
-    rpos = rowptrs[:-1].copy()
-
-    for i in range(len(rowinds)):
-        row = rowinds[i]
-        pos = rpos[row]
-        align[pos] = i
-        rpos[row] += 1

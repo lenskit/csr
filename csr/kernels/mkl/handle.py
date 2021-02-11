@@ -6,7 +6,7 @@ from numba.experimental import structref
 
 from csr import CSR
 from ._api import *
-from csr.native_ops import make_empty
+from csr.csr import create_empty
 
 __all__ = [
     'mkl_h',
@@ -52,7 +52,7 @@ def to_handle(csr: CSR) -> mkl_h:
 @njit
 def from_handle(h: mkl_h) -> CSR:
     if not h.H:
-        return make_empty(h.nrows, h.ncols)
+        return create_empty(h.nrows, h.ncols)
 
     rvp = lk_mkl_spexport_p(h.H)
     if rvp is None:

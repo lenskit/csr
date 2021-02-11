@@ -1,7 +1,6 @@
 import numpy as np
 from numba import njit
 
-from csr.layout import EMPTY_VALUES
 from ._api import *
 from .handle import mkl_h
 
@@ -17,7 +16,7 @@ def mult_ab(a_h, b_h):
         h = lk_mkl_spmab(a_h.H, b_h.H)
     else:
         h = 0
-    return mkl_h(h, a_h.nrows, b_h.ncols, EMPTY_VALUES)
+    return mkl_h(h, a_h.nrows, b_h.ncols, None)
 
 
 @njit(nogil=True)
@@ -26,7 +25,7 @@ def mult_abt(a_h, b_h):
         h = lk_mkl_spmabt(a_h.H, b_h.H)
     else:
         h = 0
-    return mkl_h(h, a_h.nrows, b_h.nrows, EMPTY_VALUES)
+    return mkl_h(h, a_h.nrows, b_h.nrows, None)
 
 
 @njit(nogil=True)

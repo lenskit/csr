@@ -13,16 +13,21 @@ import hypothesis.strategies as st
 import hypothesis.extra.numpy as nph
 
 
-def _get_attr(csr, name):
-    "Helper to synthesize Numba-compiled functions that access attributes."
-    env = {'njit': njit, 'defs': {}}
+_getters = {}
+
+for __a in ['ncols', 'nrows', 'nnz', 'rowptrs', 'colinds', 'has_values', 'values']:
+    __env = {'njit': njit, 'defs': {}}
     exec(dedent(f'''
     @njit
-    def _get_{name}(csr):
-        return csr.{name}
-    defs['getter'] = _get_{name}
-    '''), env)
-    getter = env['defs']['getter']
+    def _get_{__a}(csr):
+        return csr.{__a}
+    defs['getter'] = _get_{__a}
+    '''), __env)
+    _getters[__a] = __env['defs']['getter']
+
+
+def _get_attr(csr, name):
+    getter = _getters[name]
     return getter(csr)
 
 
@@ -41,13 +46,49 @@ def test_access_fields(csr):
         assert all(_get_attr(csr, 'values') == csr.values)
 
 
+@njit
+def _extent(csr, row):
+    return csr.row_extent(row)
+
+
 @given(csrs())
 def test_csr_row_extent(csr):
-    @njit
-    def _extent(csr, row):
-        return csr.row_extent(row)
 
     for i in range(csr.nrows):
         sp, ep = _extent(csr, i)
         assert sp == csr.rowptrs[i]
-        assert ep == csr.rowptrs[i+1]
+        assert ep == csr.rowptrs[i + 1]
+
+
+@njit
+def _row(csr, row):
+    return csr.row(row)
+
+
+@given(csrs())
+def test_csr_row(csr):
+
+    for i in range(csr.nrows):
+        cr = csr.row(i)
+        nr = _row(csr, i)
+        assert nr.shape == cr.shape
+        assert all(nr == cr)
+
+
+@njit
+def _row_cvs(csr, row):
+    cs = csr.row_cs(row)
+    vs = csr.row_vs(row)
+    return cs, vs
+
+
+@given(csrs())
+def test_csr_row_cvs(csr):
+    for i in range(csr.nrows):
+        ccs = csr.row_cs(i)
+        cvs = csr.row_vs(i)
+        ncs, nvs = _row_cvs(csr, i)
+        assert ncs.shape == ccs.shape
+        assert nvs.shape == cvs.shape
+        assert all(ncs == ccs)
+        assert all(nvs == cvs)

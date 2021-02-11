@@ -8,7 +8,7 @@ Matrix multiplication using the SMMP algorithm [SMMP]_.
 import numpy as np
 from numba import njit
 from csr import CSR
-from csr.native_ops import row_extent, transpose
+from csr.native_ops import transpose
 
 
 @njit(nogil=True)
@@ -71,10 +71,10 @@ def _sym_mm(a_h, b_h, c_rp):
         length = 0
 
         # Pass 1: count and link columns in row
-        a_rs, a_re = row_extent(a_h, i)
+        a_rs, a_re = a_h.row_extent(i)
         for jj in range(a_rs, a_re):
             j = a_h.colinds[jj]
-            b_rs, b_re = row_extent(b_h, j)
+            b_rs, b_re = b_h.row_extent(j)
             for kk in range(b_rs, b_re):
                 k = b_h.colinds[kk]
                 if index[k] < 0:
@@ -110,12 +110,12 @@ def _num_mm(a_h, b_h, c_rp, c_ci):
     c_vs = np.zeros(len(c_ci))
 
     for i in range(a_h.nrows):
-        a_rs, a_re = row_extent(a_h, i)
+        a_rs, a_re = a_h.row_extent(i)
         for jj in range(a_rs, a_re):
             j = a_h.colinds[jj]
             av = a_h.values[jj]
 
-            b_rs, b_re = row_extent(b_h, j)
+            b_rs, b_re = b_h.row_extent(j)
             for kk in range(b_rs, b_re):
                 k = b_h.colinds[kk]
                 work[k] += av * b_h.values[kk]
