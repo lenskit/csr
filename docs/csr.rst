@@ -17,6 +17,17 @@ sparse matrices.
 .. automethod:: CSR.from_coo
 .. automethod:: CSR.empty
 
+Constructing from Numba
+~~~~~~~~~~~~~~~~~~~~~~~
+
+Numba does not provide access to CSR's class methods; instead, use the creation
+functions (these also work from pure Python):
+
+.. autofunction:: create
+.. autofunction:: create_novalues
+.. autofunction:: create_empty
+.. autofunction:: create_from_sizes
+
 Accessing Rows
 --------------
 

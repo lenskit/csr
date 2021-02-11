@@ -37,18 +37,25 @@ else:
 class CSR(_csr_base):
     """
     Simple compressed sparse row matrix.  This is like :py:class:`scipy.sparse.csr_matrix`, with
-    a couple of useful differences:
+    a few useful differences:
 
     * The value array is optional, for cases in which only the matrix structure is required.
     * The value array, if present, is always double-precision.
+    * It is usable from code compiled in Numba's nopython mode.
 
     You generally don't want to create this class yourself with the constructor.  Instead, use one
     of its class or static methods.
 
-    This class, with its attributes and several of its methods, is also usable from Numba (it is a
-    proxy for a Numba StructRef).  When used from Numba, :py:attr:`values` is always present, but
-    has length 0 when there is no value array.  Use the :py:attr:`has_values` attribute to check
-    for its presence.
+    Not all methods are available from Numba, and a few have restricted signatures.  The
+    documentation for each method notes deviations when in Numba-compiled code.
+
+    At the Numba level, matrices with and without value arrays have different types. For the
+    most part, this is transparent, but if you want to write a Numba function that works on
+    the values array but only if it is present, it requires writing two versions of the
+    function and using :py:func:`numba.extending.overload` to dispatch to the correct one.
+    There are several examples of doing this in the CSR source code. The method
+    :py:meth:`CSRType.has_values` lets you quickly see if a CSR type instance has
+    values or not.
 
     Attributes:
         nrows(int): the number of rows.
@@ -56,7 +63,6 @@ class CSR(_csr_base):
         nnz(int): the number of entries.
         rowptrs(numpy.ndarray): the row pointers.
         colinds(numpy.ndarray): the column indices.
-        has_values(bool): whether the array has values.
         values(numpy.ndarray or None): the values.
     """
 

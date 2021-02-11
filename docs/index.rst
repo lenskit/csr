@@ -20,7 +20,6 @@ Contents
    :maxdepth: 1
 
    csr
-   native
    kernels
 
 Indices and tables
