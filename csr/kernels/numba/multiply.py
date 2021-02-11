@@ -7,7 +7,7 @@ Matrix multiplication using the SMMP algorithm [SMMP]_.
 
 import numpy as np
 from numba import njit
-from csr.layout import _CSR
+from csr import CSR
 from csr.native_ops import row_extent, transpose
 
 
@@ -36,7 +36,7 @@ def mult_ab(a_h, b_h):
     c_vs = _num_mm(a_h, b_h, c_rp, c_ci)
 
     # build the result
-    return _CSR(a_h.nrows, b_h.ncols, c_nnz, c_rp, c_ci, c_vs)
+    return CSR(a_h.nrows, b_h.ncols, c_nnz, c_rp, c_ci, True, c_vs)
 
 
 @njit(nogil=True)
