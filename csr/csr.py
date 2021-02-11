@@ -19,7 +19,8 @@ from csr.kernels import get_kernel, releasing
 
 @structref.register
 class CSRType(types.StructRef):
-    pass
+    def preprocess_fields(self, fields):
+        return tuple((name, types.unliteral(typ)) for name, typ in fields)
 
 
 @njit
