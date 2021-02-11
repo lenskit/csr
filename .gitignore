@@ -9,6 +9,7 @@ bench*.json
 .coverage
 *.egg-info/
 .ipynb_checkpoints/
+.benchmarks/
 /build/
 /dist/
 /Release/
