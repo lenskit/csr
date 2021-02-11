@@ -6,14 +6,35 @@ import warnings
 import numpy as np
 import scipy.sparse as sps
 
+from numba import config
 from numba.extending import overload_method
 from numba.experimental import structref
 
 from csr.kernels import get_kernel, releasing
 from . import _struct, _rows
 
+# ugly hack for a bug on Numba < 0.53
+if config.DISABLE_JIT:
+    class _csr_base:
+        def __init__(self, nrows, ncols, nnz, ptrs, inds, vals):
+            self.nrows = nrows
+            self.ncols = ncols
+            self.nnz = nnz
+            self.rowptrs = ptrs
+            self.colinds = inds
+            self._values = vals
 
-class CSR(structref.StructRefProxy):
+        def _numba_box_(self, *args):
+            raise NotImplementedError()
+
+    NUMBA_ENABLED = False
+
+else:
+    _csr_base = structref.StructRefProxy
+    NUMBA_ENABLED = True
+
+
+class CSR(_csr_base):
     """
     Simple compressed sparse row matrix.  This is like :py:class:`scipy.sparse.csr_matrix`, with
     a couple of useful differences:
@@ -38,9 +59,6 @@ class CSR(structref.StructRefProxy):
         has_values(bool): whether the array has values.
         values(numpy.ndarray or None): the values.
     """
-
-    def __new__(cls, nrows, ncols, nnz, ptrs, inds, vals):
-        return structref.StructRefProxy.__new__(cls, nrows, ncols, nnz, ptrs, inds, vals)
 
     @classmethod
     def empty(cls, nrows, ncols, row_nnzs=None):
@@ -127,15 +145,19 @@ class CSR(structref.StructRefProxy):
             values = np.full(self.nnz, 1.0)
         return sps.csr_matrix((values, self.colinds, self.rowptrs), shape=(self.nrows, self.ncols))
 
-    nrows = property(_struct.get_nrows)
-    ncols = property(_struct.get_ncols)
-    nnz = property(_struct.get_nnz)
-    rowptrs = property(_struct.get_rowptrs)
-    colinds = property(_struct.get_colinds)
+    if _csr_base is structref.StructRefProxy:
+        nrows = property(_struct.get_nrows)
+        ncols = property(_struct.get_ncols)
+        nnz = property(_struct.get_nnz)
+        rowptrs = property(_struct.get_rowptrs)
+        colinds = property(_struct.get_colinds)
 
     @property
     def values(self):
-        return _struct.get_values(self)
+        if NUMBA_ENABLED:
+            return _struct.get_values(self)
+        else:
+            return self._values
 
     @values.setter
     def values(self, vs: np.ndarray):
@@ -149,9 +171,19 @@ class CSR(structref.StructRefProxy):
 
             new = CSR(self.nrows, self.ncols, self.nnz, self.rowptrs, self.colinds, vs)
 
-        # replace our internals
-        self._type = new._type
-        self._meminfo = new._meminfo
+        if NUMBA_ENABLED:
+            # replace our internals
+            self._type = new._type
+            self._meminfo = new._meminfo
+        else:
+            self._values = new._values
+
+    def _e_value(self, i):
+        vs = self.values
+        if vs is not None:
+            return vs[i]
+        else:
+            return 1.0
 
     @property
     def R(self):
@@ -344,7 +376,7 @@ class CSR(structref.StructRefProxy):
 
         return CSR(self.nrows, self.ncols, nnz2, rps2, cis2, vs2)
 
-    def multiply(self, other, *, transpose=False):
+    def multiply(self, other, transpose=False):
         """
         Multiply this matrix by another.
 
