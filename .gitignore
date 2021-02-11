@@ -10,6 +10,7 @@ bench*.json
 *.egg-info/
 .ipynb_checkpoints/
 .benchmarks/
+.tox/
 /build/
 /dist/
 /Release/
