@@ -83,7 +83,7 @@ class CSR(_csr_base):
         return _csr_base.__new__(cls, nrows, ncols, nnz, rps, cis, vs)
 
     @classmethod
-    def empty(cls, nrows, ncols, row_nnzs=None):
+    def empty(cls, nrows, ncols, row_nnzs=None, values=True):
         """
         Create an uninitialized CSR matrix.
 
@@ -92,6 +92,8 @@ class CSR(_csr_base):
             ncols(int): the number of columns.
             row_nnzs(array-like):
                 the number of nonzero entries for each row, or None for an empty matrix.
+            values(bool):
+                whether it has values or only structure.
         """
         from .constructors import create_empty, create_from_sizes
         if row_nnzs is not None:

@@ -27,3 +27,22 @@ def test_uninitialized(data, nrows, ncols):
     assert len(csr.rowptrs) == nrows + 1
     assert all(csr.row_nnzs() == sizes)
     assert len(csr.colinds) == np.sum(sizes)
+
+
+def test_large_init():
+    # 10M * 500 = 5B >= INT_MAX
+    nrows = 10000000
+    ncols = 500
+    nnz = nrows * 250
+
+    rowptrs = np.arange(0, nnz + 1, 250, dtype=np.int64)
+    assert len(rowptrs) == nrows + 1
+    assert rowptrs[-1] == nnz
+
+    colinds = np.empty(nnz, dtype=np.intc)
+
+    csr = CSR(nrows, ncols, nnz, rowptrs, colinds, None)
+    assert csr.nrows == nrows
+    assert csr.ncols == ncols
+    assert csr.nnz == nnz
+    assert csr.rowptrs.dtype == np.dtype('i8')
