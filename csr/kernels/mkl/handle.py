@@ -6,7 +6,7 @@ from numba.experimental import structref
 
 from csr import CSR
 from ._api import *
-from csr.csr import create_empty
+from csr.constructors import create_empty
 
 __all__ = [
     'mkl_h',
@@ -39,10 +39,7 @@ def to_handle(csr: CSR) -> mkl_h:
 
     _sp = ffi.from_buffer(csr.rowptrs)
     _cols = ffi.from_buffer(csr.colinds)
-    if csr.has_values:
-        vs = csr.values
-    else:
-        vs = np.ones(csr.nnz)
+    vs = csr._required_values()
     _vals = ffi.from_buffer(vs)
     h = lk_mkl_spcreate(csr.nrows, csr.ncols, _sp, _cols, _vals)
     lk_mkl_spopt(h)
@@ -85,7 +82,7 @@ def from_handle(h: mkl_h) -> CSR:
 
     lk_mkl_spe_free(rvp)
 
-    return CSR(nrows, ncols, nnz, rowptrs, colinds, True, values)
+    return CSR(nrows, ncols, nnz, rowptrs, colinds, values)
 
 
 @njit

@@ -2,8 +2,7 @@
 Wire together the Numba and Python types.
 """
 
-import struct
-from numba.core import types
+import numpy as np
 from numba.extending import overload_method
 from numba.experimental import structref
 
@@ -73,6 +72,20 @@ def _csr_e_value(csr, i):
         return val
     else:
         return one
+
+
+@overload_method(CSRType, '_required_values')
+def _csr_required_values(csr):
+    def ones(csr):
+        return np.ones(csr.nnz)
+
+    def vals(csr):
+        return csr.values
+
+    if csr.has_values:
+        return vals
+    else:
+        return ones
 
 
 @overload_method(CSRType, 'multiply')

@@ -184,6 +184,13 @@ class CSR(_csr_base):
         else:
             self._values = new._values
 
+    def _required_values(self):
+        """
+        Get the value array, returning an array of 1s if it is not present.
+        """
+        vs = self.values
+        return vs if vs is not None else np.ones(self.nnz)
+
     def _e_value(self, i):
         vs = self.values
         if vs is not None:
