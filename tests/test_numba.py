@@ -1,9 +1,11 @@
 from textwrap import dedent
+from _pytest.python_api import approx
 import numpy as np
+from numpy.testing._private.utils import assert_equal
 import scipy.sparse as sps
 
 from csr import CSR
-from csr.test_utils import csrs, matrices, sparse_matrices
+from csr.test_utils import csrs, matrices, mm_pairs, sparse_matrices
 
 from numba import njit
 
@@ -92,3 +94,43 @@ def test_csr_row_cvs(csr):
         assert nvs.shape == cvs.shape
         assert all(ncs == ccs)
         assert all(nvs == cvs)
+
+
+@njit
+def _mult(A, B, transpose):
+    return A.multiply(B, transpose)
+
+
+@given(mm_pairs(), st.booleans())
+def test_numba_mult(pair, transpose):
+    A, B = pair
+    C = A @ B
+
+    A = CSR.from_scipy(A)
+    B = CSR.from_scipy(B)
+
+    if transpose:
+        B = B.transpose()
+
+    res = _mult(A, B, transpose)
+
+    cnr, cnc = C.shape
+    assert res.nrows == cnr
+    assert res.ncols == cnc
+    assert res.nnz == C.nnz
+
+
+@njit
+def _mult_vec(A, x):
+    return A.mult_vec(x)
+
+
+@given(st.data())
+def test_numba_mult_vec(data):
+    A = data.draw(csrs())
+    x = data.draw(nph.arrays(np.float64, A.ncols))
+
+    y = _mult_vec(A, x)
+
+    assert y.shape == (A.nrows,)
+    assert y == approx(A.to_scipy() @ x)
