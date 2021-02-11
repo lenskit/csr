@@ -11,7 +11,6 @@ from numba.core import types
 from numba.experimental import structref
 
 from csr.kernels import get_kernel, releasing
-from csr.layout import EMPTY_VALUES, _CSR
 
 
 @structref.register
@@ -443,17 +442,9 @@ class CSR(structref.StructRefProxy):
         repr += '}'
         return repr
 
-    def __getstate__(self):
-        return dict(shape=(self.nrows, self.ncols), nnz=self.nnz,
-                    rowptrs=self.rowptrs, colinds=self.colinds, values=self.values)
-
-    def __setstate__(self, state):
-        nrows, ncols = state['shape']
-        nnz = state['nnz']
-        rps = state['rowptrs']
-        cis = state['colinds']
-        vs = state['values']
-        self.R = _CSR(nrows, ncols, nnz, rps, cis, vs)
+    def __reduce__(self):
+        args = (self.nrows, self.ncols, self.nnz, self.rowptrs, self.colinds, self.values)
+        return (CSR, args)
 
 
 structref.define_proxy(CSR, CSRType, [
