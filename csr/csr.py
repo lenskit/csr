@@ -83,7 +83,7 @@ class CSR(_csr_base):
                     vs = np.require(vs, requirements='C')
             return _csr_base.__new__(cls, nrows, ncols, nnz, rps, cis, vs)
         else:
-            return _csr_base.__init__
+            return _csr_base.__new__(cls)
 
 
     @classmethod
