@@ -8,7 +8,6 @@ from csr.test_utils import csrs
 from hypothesis import given, settings
 
 
-@settings(deadline=5000)
 @given(csrs())
 def test_make_handle(kernel, csr):
     h = kernel.to_handle(csr.R)
