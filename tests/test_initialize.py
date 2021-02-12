@@ -1,6 +1,7 @@
 from csr import CSR
 import numpy as np
 
+import pytest
 from hypothesis import given
 import hypothesis.strategies as st
 import hypothesis.extra.numpy as nph
@@ -39,7 +40,10 @@ def test_large_init():
     assert len(rowptrs) == nrows + 1
     assert rowptrs[-1] == nnz
 
-    colinds = np.empty(nnz, dtype=np.intc)
+    try:
+        colinds = np.empty(nnz, dtype=np.intc)
+    except MemoryError:
+        pytest.skip('insufficient memory')
 
     csr = CSR(nrows, ncols, nnz, rowptrs, colinds, None)
     assert csr.nrows == nrows
