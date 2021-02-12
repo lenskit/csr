@@ -175,4 +175,4 @@ def test_numba_mult_vec(data):
     y = _mult_vec(A, x)
 
     assert y.shape == (A.nrows,)
-    assert y == approx(A.to_scipy() @ x, nan_ok=True)
+    assert y == approx(A.to_scipy() @ x, nan_ok=True, rel=1.0e-5)
