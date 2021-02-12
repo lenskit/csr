@@ -75,9 +75,7 @@ def from_handle(h: mkl_h) -> CSR:
 
     rowptrs = np.zeros(nrows + 1, dtype=np.intc)
     nnz = 0
-    print('m', nnz, nrows, ncols)
     for i in range(nrows):
-        print('r', nnz, sp[i], ep[i])
         nnz += ep[i] - sp[i]
         rowptrs[i + 1] = nnz
     assert nnz == ep[nrows - 1]
