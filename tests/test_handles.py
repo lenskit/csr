@@ -2,10 +2,9 @@
 Tests for creating kernel handles.
 """
 
-from csr import CSR
 from csr.test_utils import csrs
 
-from hypothesis import given, settings
+from hypothesis import given
 
 
 @given(csrs())
