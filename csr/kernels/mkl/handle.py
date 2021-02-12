@@ -51,9 +51,6 @@ def to_handle(csr: CSR) -> mkl_h:
     vs = csr._required_values()
     assert vs.size == csr.nnz
     _vals = ffi.from_buffer(vs)
-    print('go', csr, file=sys.stderr)
-    print('rps', csr.rowptrs, file=sys.stderr)
-    print('rdt', csr.rowptrs.dtype, file=sys.stderr)
     h = lk_mkl_spcreate(csr.nrows, csr.ncols, _sp, _cols, _vals)
     lk_mkl_spopt(h)
     return mkl_h(h, csr.nrows, csr.ncols, vs)
