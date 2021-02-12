@@ -17,13 +17,19 @@ INTC = np.iinfo(np.intc)
 # ugly hack for a bug on Numba < 0.53
 if config.DISABLE_JIT:
     class _csr_base:
-        def __init__(self, nrows, ncols, nnz, ptrs, inds, vals):
+        def __init__(self, nrows, ncols, nnz, ptrs, inds, vals, cast=True):
             self.nrows = nrows
             self.ncols = ncols
             self.nnz = nnz
-            self.rowptrs = ptrs
-            self.colinds = inds
-            self._values = vals
+            if cast and np.max(ptrs) <= INTC.max:
+                self.rowptrs = np.require(ptrs, np.intc, 'C')
+            else:
+                self.rowptrs = np.require(ptrs, requirements='C')
+            self.colinds = np.require(inds, np.intc, 'C')
+            if vals is not None:
+                self._values = np.require(vals, requirements='C')
+            else:
+                self._values = None
 
         def _numba_box_(self, *args):
             raise NotImplementedError()
@@ -72,15 +78,16 @@ class CSR(_csr_base):
         assert nrows <= INTC.max
         assert ncols >= INTC.min
         assert ncols <= INTC.max
+        nrows = np.intc(nrows)
+        ncols = np.intc(ncols)
+        if cast:
+            cis = np.require(cis, np.intc, 'C')
+            if nnz <= INTC.max:
+                rps = np.require(rps, np.intc, 'C')
+            if vs is not None:
+                vs = np.require(vs, requirements='C')
+
         if NUMBA_ENABLED:
-            nrows = np.intc(nrows)
-            ncols = np.intc(ncols)
-            if cast:
-                cis = np.require(cis, np.intc, 'C')
-                if nnz <= INTC.max:
-                    rps = np.require(rps, np.intc, 'C')
-                if vs is not None:
-                    vs = np.require(vs, requirements='C')
             return _csr_base.__new__(cls, nrows, ncols, nnz, rps, cis, vs)
         else:
             return _csr_base.__new__(cls)
@@ -213,7 +220,10 @@ class CSR(_csr_base):
         Get the value array, returning an array of 1s if it is not present.
         """
         vs = self.values
-        return vs if vs is not None else np.ones(self.nnz)
+        if vs is None:
+            return np.ones(self.nnz)
+        else:
+            return vs
 
     def _e_value(self, i):
         vs = self.values

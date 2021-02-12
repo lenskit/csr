@@ -1,5 +1,8 @@
+import sys
+from typing import Optional
+import dataclasses
 import numpy as np
-from numba import njit
+from numba import njit, config
 from numba.core.types import StructRef
 from numba.experimental import structref
 
@@ -21,13 +24,20 @@ class mkl_h_type(StructRef):
     pass
 
 
-class mkl_h(structref.StructRefProxy):
-    """
-    Type for MKL handles.  Opaque, do not use directly.
-    """
+if config.DISABLE_JIT:
+    @dataclasses.dataclass
+    class mkl_h:
+        H: int
+        nrows: int
+        ncols: int
+        values: Optional[np.ndarray]
+else:
+    class mkl_h(structref.StructRefProxy):
+        """
+        Type for MKL handles.  Opaque, do not use directly.
+        """
 
-
-structref.define_proxy(mkl_h, mkl_h_type, ['H', 'nrows', 'ncols', 'values'])
+    structref.define_proxy(mkl_h, mkl_h_type, ['H', 'nrows', 'ncols', 'values'])
 
 
 @njit
@@ -39,7 +49,11 @@ def to_handle(csr: CSR) -> mkl_h:
     _sp = ffi.from_buffer(csr.rowptrs)
     _cols = ffi.from_buffer(csr.colinds)
     vs = csr._required_values()
+    assert vs.size == csr.nnz
     _vals = ffi.from_buffer(vs)
+    print('go', csr, file=sys.stderr)
+    print('rps', csr.rowptrs, file=sys.stderr)
+    print('rdt', csr.rowptrs.dtype, file=sys.stderr)
     h = lk_mkl_spcreate(csr.nrows, csr.ncols, _sp, _cols, _vals)
     lk_mkl_spopt(h)
     return mkl_h(h, csr.nrows, csr.ncols, vs)
@@ -64,16 +78,19 @@ def from_handle(h: mkl_h) -> CSR:
 
     rowptrs = np.zeros(nrows + 1, dtype=np.intc)
     nnz = 0
+    print('m', nnz, nrows, ncols)
     for i in range(nrows):
+        print('r', nnz, sp[i], ep[i])
         nnz += ep[i] - sp[i]
-        rowptrs[i+1] = nnz
+        rowptrs[i + 1] = nnz
+    assert nnz == ep[nrows - 1]
 
     colinds = np.zeros(nnz, dtype=np.intc)
     values = np.zeros(nnz)
 
     for i in range(nrows):
         rs = rowptrs[i]
-        re = rowptrs[i+1]
+        re = rowptrs[i + 1]
         ss = sp[i]
         for j in range(re - rs):
             colinds[rs + j] = cis[ss + j]

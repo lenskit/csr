@@ -55,7 +55,7 @@ lk_mkl_spcreate(int nrows, int ncols, int *rowptrs, int *colinds, double *values
     check_return("mkl_sparse_d_create_csr", rv);
 
 #ifdef LK_TRACE
-    fprintf(stderr, "allocated 0x%8lx (%dx%d)\n", matrix, nrows, ncols);
+    fprintf(stderr, "allocated 0x%8lx (%dx%d) %d\n", matrix, nrows, ncols, rowptrs[nrows]);
 #endif
     return H(matrix);
 }
