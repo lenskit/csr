@@ -14,7 +14,7 @@ requires = [
     "numba >=0.51,<0.54",
     "numpy >= 1.16",
     "scipy",
-    "dataclass; python_version<3.7"
+    "dataclasses; python_version < '3.7'"
 ]
 
 [tool.flit.metadata.requires-extra]
