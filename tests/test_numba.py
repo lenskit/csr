@@ -170,7 +170,8 @@ def _mult_vec(A, x):
 @given(st.data())
 def test_numba_mult_vec(data):
     A = data.draw(csrs())
-    x = data.draw(nph.arrays(np.float64, A.ncols))
+    vals = st.floats(-100, 100)
+    x = data.draw(nph.arrays(np.float64, A.ncols, elements=vals))
 
     y = _mult_vec(A, x)
 
