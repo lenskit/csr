@@ -2,6 +2,7 @@ import logging
 
 from hypothesis import settings
 from pytest import fixture
+from csr import CSR
 from csr.kernels import use_kernel, get_kernel
 
 # turn off Numba logging
@@ -24,7 +25,13 @@ def kernel(request):
     will be called once for each kernel under active test.
     """
     with use_kernel(request.param):
-        yield get_kernel()
+        k = get_kernel()
+        # warm-up the kernel
+        m = CSR.empty(1, 1)
+        h = k.to_handle(m)
+        k.release_handle(h)
+        del h, m
+        yield k
 
 
 # set up profiles
