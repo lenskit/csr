@@ -12,7 +12,7 @@ description-file = "README.md"
 requires-python = ">= 3.7"
 requires = [
     "numba >=0.51,<0.54",
-    "numpy >= 1.16",
+    "numpy >=1.17",
     "scipy"
 ]
 
