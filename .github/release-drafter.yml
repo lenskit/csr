@@ -1,0 +1,4 @@
+template: |
+  ## Merged PRs
+
+  $CHANGES
