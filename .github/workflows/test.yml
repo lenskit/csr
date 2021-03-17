@@ -19,12 +19,9 @@ jobs:
         - windows
         - ubuntu
         python:
-        - 3.6
         - 3.7
         - 3.8
-        exclude:
-          - platform: macos
-            python: 3.9
+        - 3.9
 
     steps:
     - uses: actions/checkout@v2
@@ -34,9 +31,9 @@ jobs:
     - name: Setup conda
       uses: s-weigand/setup-conda@v1
       with:
-        # update-conda: true
+        update-conda: true
         python-version: ${{ matrix.python }}
-        conda-channels: conda-forge
+        # conda-channels: conda-forge
 
     - name: Inspect environment
       run: |
@@ -45,28 +42,28 @@ jobs:
 
     - name: Set up dependencies
       run: |
-        conda install -qy -c conda-forge flit-core packaging pyyaml
-        python build-tools/flit-conda.py -n base -E mkl --python-version ${{matrix.python}} --save-env environment.yml
+        conda install -qy flit-core packaging pyyaml
+        python build-tools/flit-conda.py -E mkl --python-version ${{matrix.python}} --save-env environment.yml
         cat environment.yml
-        conda env update -q -n base -f environment.yml
-        conda list
+        conda env create -q -n csr -f environment.yml
+        conda list -n csr
 
     - name: Compile MKL helper
       run: |
-        python build_mkl.py
+        conda run -n csr python build_mkl.py
 
     - name: Run tests
       run: |
-        python -m pytest --cov=csr
+        conda run -n csr python -m pytest --cov=csr
 
     - name: Run tests without JIT
       run: |
-        python -m pytest --cov=csr --cov-append --log-file=test-nojit.log --hypothesis-profile=nojit
+        conda run -n csr python -m pytest --cov=csr --cov-append --log-file=test-nojit.log --hypothesis-profile=nojit
       env:
         NUMBA_DISABLE_JIT: 1
 
     - name: Aggregate coverage data
-      run: coverage xml
+      run: conda run -n csr coverage xml
 
     - name: Upload coverage
       uses: codecov/codecov-action@v1
