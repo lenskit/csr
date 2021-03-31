@@ -1,3 +1,4 @@
+import logging
 import numpy as np
 import scipy.sparse as sps
 
@@ -8,6 +9,8 @@ from pytest import mark, approx, raises
 from hypothesis import given, assume, settings, HealthCheck
 import hypothesis.strategies as st
 import hypothesis.extra.numpy as nph
+
+_log = logging.getLogger(__name__)
 
 
 @csr_slow()
@@ -28,6 +31,37 @@ def test_subset_rows(data):
     for i in range(m2.nrows):
         assert all(m2.row_cs(i) == csr.row_cs(beg+i))
         assert all(m2.row_vs(i) == csr.row_vs(beg+i))
+
+
+@csr_slow()
+@given(st.data())
+def test_pick_rows(data):
+    include = data.draw(st.booleans())
+    csr = data.draw(csrs())
+    nrows = csr.nrows
+
+    to_pick = st.integers(0, nrows * 10)
+    r_range = st.integers(0, nrows - 1)
+    rows = data.draw(nph.arrays(np.int32, to_pick, elements=r_range))
+
+    _log.debug('picking %d rows from %d-row matrix', len(rows), nrows)
+
+    sub = csr.pick_rows(rows, include_values=include)
+    assert sub.nrows == len(rows)
+    assert len(sub.rowptrs) == sub.nrows + 1
+    if include and csr.values is not None:
+        assert sub.values is not None
+    else:
+        assert sub.values is None
+
+    for i, r in enumerate(rows):
+        osp, oep = csr.row_extent(r)
+        sp, ep = sub.row_extent(i)
+        assert oep - osp == ep - sp
+
+        assert all(csr.row_cs(r) == sub.row_cs(i))
+        if sub.values is not None:
+            assert all(csr.row_vs(r) == sub.row_vs(i))
 
 
 @given(csrs())

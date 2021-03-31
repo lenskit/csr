@@ -21,7 +21,7 @@ if config.DISABLE_JIT:
             self.nrows = nrows
             self.ncols = ncols
             self.nnz = nnz
-            if cast and np.max(ptrs) <= INTC.max:
+            if cast and np.max(ptrs, initial=0) <= INTC.max:
                 self.rowptrs = np.require(ptrs, np.intc, 'C')
             else:
                 self.rowptrs = np.require(ptrs, requirements='C')
@@ -282,6 +282,25 @@ class CSR(_csr_base):
         """
         from .structure import subset_rows
         return subset_rows(self, begin, end)
+
+    def pick_rows(self, rows, *, include_values=True):
+        """
+        Pick rows from this matrix.  A row may appear more than once.
+
+        .. note:: This method is not available from Numba.
+
+        Args:
+            rows(numpy.ndarray): the row indices to select.
+            include_values(bool): whether to include values if present
+
+        Returns:
+            CSR: the matrix containing the specified rows.
+        """
+        from .structure import _pick_rows, _pick_rows_nvs
+        if include_values and self.values is not None:
+            return _pick_rows(self, rows)
+        else:
+            return _pick_rows_nvs(self, rows)
 
     def rowinds(self) -> np.ndarray:
         """
