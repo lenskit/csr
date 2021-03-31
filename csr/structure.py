@@ -82,6 +82,78 @@ def subset_rows(csr, begin, end):
 
 
 @njit(nogil=True)
+def _pick_rows_nvs(csr: CSR, rows: np.ndarray):
+    # how many values do we need
+    # this is equivalent to np.sum(tag_mat.row_nnzs()[items]) (which would be fast in Python),
+    # but uses less memory
+    nr = len(rows)
+    nnz = 0
+    for i in rows:
+        sp, ep = csr.row_extent(i)
+        rl = ep - sp
+        nnz += rl
+
+    # allocate result arrays
+    rowptrs = np.empty(nr + 1, dtype=np.int32)
+    colinds = np.empty(nnz, dtype=np.int32)
+    pos = 0
+
+    # copy each item's rows to result array
+    for ii, i in enumerate(rows):
+        # get row start/end
+        sp, ep = csr.row_extent(i)
+        # how many tags for this item?
+        itc = ep - sp
+        end = pos + itc
+        # copy values
+        colinds[pos:end] = csr.colinds[sp:ep]
+        # set offset
+        rowptrs[ii] = pos
+        # update position for storing results
+        pos = end
+    rowptrs[nr] = pos
+
+    return CSR(nr, csr.ncols, nnz, rowptrs, colinds, None)
+
+
+@njit(nogil=True)
+def _pick_rows(csr: CSR, rows: np.ndarray):
+    # how many values do we need
+    # this is equivalent to np.sum(tag_mat.row_nnzs()[items]) (which would be fast in Python),
+    # but uses less memory
+    nr = len(rows)
+    nnz = 0
+    for i in rows:
+        sp, ep = csr.row_extent(i)
+        rl = ep - sp
+        nnz += rl
+
+    # allocate result arrays
+    rowptrs = np.empty(nr + 1, dtype=np.int32)
+    colinds = np.empty(nnz, dtype=np.int32)
+    values = np.empty(nnz, dtype=csr.values.dtype)
+    pos = 0
+
+    # copy each item's rows to result array
+    for ii, i in enumerate(rows):
+        # get row start/end
+        sp, ep = csr.row_extent(i)
+        # how many tags for this item?
+        itc = ep - sp
+        end = pos + itc
+        # copy values
+        colinds[pos:end] = csr.colinds[sp:ep]
+        values[pos:end] = csr.values[sp:ep]
+        # set offset
+        rowptrs[ii] = pos
+        # update position for storing results
+        pos = end
+    rowptrs[nr] = pos
+
+    return CSR(nr, csr.ncols, nnz, rowptrs, colinds, values)
+
+
+@njit(nogil=True)
 def sort_rows(csr):
     "Sort the rows of a CSR by increasing column index"
     for i in range(csr.nrows):
