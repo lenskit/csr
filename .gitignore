@@ -19,3 +19,4 @@ bench*.json
 *.so
 *.dylib
 _*.c
+cov*.xml
