@@ -64,10 +64,34 @@ jobs:
         NUMBA_DISABLE_JIT: 1
 
     - name: Aggregate coverage data
-      run: conda run -n csr coverage xml
+      run: conda run -n csr coverage xml -o coverage-${{matrix.python}}-${{matrix.platform}}.xml
 
-    - name: Upload coverage
+    - name: Upload coverage logs
+      uses: actions/upload-artifact@v2
+      with:
+        path: |
+          coverage*.xml
+
+    - name: Upload coverage to CodeCov
       uses: codecov/codecov-action@v1
+
+  analyze:
+    name: Analyze Source Code
+    runs-on: ubnutn-latest
+    needs: [test]
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        fetch-depth: -1
+
+    - uses: actions/download-artifact@v2
+      name: Download coverage data
+
+    - name: SonarCloud Scan
+      uses: SonarSource/sonarcloud-github-action@master
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Needed to get PR information, if any
+        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
   sdist:
     name: Build Source Packages
@@ -111,4 +135,3 @@ jobs:
         TWINE_NON_INTERACTIVE: y
         FLIT_USERNAME: __token__
         FLIT_PASSWORD: ${{ secrets.PYPI_TOKEN }}
-
