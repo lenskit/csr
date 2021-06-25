@@ -26,6 +26,7 @@ def test_uninitialized(data, nrows, ncols):
     assert csr.ncols == ncols
     assert csr.nnz == np.sum(sizes)
     assert len(csr.rowptrs) == nrows + 1
+    assert csr.rowptrs.dtype == np.int32
     assert all(csr.row_nnzs() == sizes)
     assert len(csr.colinds) == np.sum(sizes)
 
@@ -70,4 +71,4 @@ def test_large_empty():
     assert csr.nnz == nnz
     assert csr.rowptrs.dtype == np.dtype('i8')
     assert np.all(csr.rowptrs >= 0)
-    assert np.all(np.cumsum(csr.rowptrs) == 250)
+    assert np.all(np.diff(csr.rowptrs) == 250)

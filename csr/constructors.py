@@ -56,6 +56,7 @@ def create_from_sizes(nrows, ncols, sizes):
     nrows = np.int32(nrows)
     ncols = np.int32(ncols)
     nnz = np.sum(sizes)
+    assert nnz >= 0
     rowptrs = np.zeros(nrows + 1, dtype=sizes.dtype)
     for i in range(nrows):
         rowptrs[i + 1] = rowptrs[i] + sizes[i]
