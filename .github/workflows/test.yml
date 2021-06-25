@@ -47,9 +47,12 @@ jobs:
         python build-tools/flit-conda.py -E mkl --python-version ${{matrix.python}} --save-env environment.yml
         cat environment.yml
         conda env create -q -n csr -f environment.yml
-        conda list -n csr
 
-    - name: Compile MKL helper
+    - name: 🔎 Inspect environment
+      run: |
+        conda run -n csr numba -s
+
+    - name: 🛠 Compile MKL helper
       run: |
         conda run -n csr python build_mkl.py
 
