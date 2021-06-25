@@ -18,10 +18,11 @@ def test_empty(nrows, ncols):
     assert len(csr.colinds) == 0
 
 
-@given(st.data(), st.integers(0, 1000), st.integers(0, 1000))
-def test_uninitialized(data, nrows, ncols):
+@given(st.data(), st.integers(0, 1000), st.integers(0, 1000),
+       st.one_of(st.booleans(), st.just('f4'), st.just('f8')))
+def test_empty_csr(data, nrows, ncols, vdt):
     sizes = data.draw(nph.arrays(np.int32, nrows, elements=st.integers(0, ncols)))
-    csr = CSR.empty(nrows, ncols, sizes)
+    csr = CSR.empty(nrows, ncols, sizes, values=vdt)
     assert csr.nrows == nrows
     assert csr.ncols == ncols
     assert csr.nnz == np.sum(sizes)
@@ -29,6 +30,13 @@ def test_uninitialized(data, nrows, ncols):
     assert csr.rowptrs.dtype == np.int32
     assert all(csr.row_nnzs() == sizes)
     assert len(csr.colinds) == np.sum(sizes)
+    if vdt:
+        assert csr.values is not None
+        if vdt is not True:
+            assert csr.values.dtype == vdt
+        assert csr.values.shape == (csr.nnz,)
+    else:
+        assert csr.values is None
 
 
 @given(st.data(), st.integers(0, 1000), st.integers(0, 1000))
