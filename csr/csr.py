@@ -106,6 +106,8 @@ class CSR(_csr_base):
                 whether it has values or only structure.
         """
         from .constructors import create_empty, create_from_sizes
+        assert nrows >= 0
+        assert ncols >= 0
         if row_nnzs is not None:
             assert len(row_nnzs) == nrows
             nnz = np.sum(row_nnzs, dtype=np.int64)
