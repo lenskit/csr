@@ -1,4 +1,4 @@
-from csr import CSR
+from csr import CSR, constructors
 import numpy as np
 
 import pytest
@@ -22,6 +22,19 @@ def test_empty(nrows, ncols):
 def test_uninitialized(data, nrows, ncols):
     sizes = data.draw(nph.arrays(np.int32, nrows, elements=st.integers(0, ncols)))
     csr = CSR.empty(nrows, ncols, sizes)
+    assert csr.nrows == nrows
+    assert csr.ncols == ncols
+    assert csr.nnz == np.sum(sizes)
+    assert len(csr.rowptrs) == nrows + 1
+    assert csr.rowptrs.dtype == np.int32
+    assert all(csr.row_nnzs() == sizes)
+    assert len(csr.colinds) == np.sum(sizes)
+
+
+@given(st.data(), st.integers(0, 1000), st.integers(0, 1000))
+def test_create_from_sizes(data, nrows, ncols):
+    sizes = data.draw(nph.arrays(np.int32, nrows, elements=st.integers(0, ncols)))
+    csr = constructors.create_from_sizes(nrows, ncols, sizes)
     assert csr.nrows == nrows
     assert csr.ncols == ncols
     assert csr.nnz == np.sum(sizes)
