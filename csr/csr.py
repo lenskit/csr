@@ -102,10 +102,11 @@ class CSR(_csr_base):
             ncols(int): the number of columns.
             row_nnzs(array-like):
                 the number of nonzero entries for each row, or None for an empty matrix.
-            values(bool):
-                whether it has values or only structure.
+            values(bool, str, or numpy.dtype):
+                whether it has values or only structure; can be a NumPy data type to
+                specify a type other than `f8`.
         """
-        from .constructors import create_empty, create_from_sizes
+        from .constructors import create_empty
         assert nrows >= 0
         assert ncols >= 0
         if row_nnzs is not None:
@@ -113,7 +114,18 @@ class CSR(_csr_base):
             nnz = np.sum(row_nnzs, dtype=np.int64)
             assert nnz >= 0
             rp_dtype = np.intc if nnz <= INTC.max else np.int64
-            return create_from_sizes(nrows, ncols, row_nnzs, rp_dtype)
+            rps = np.zeros(nrows + 1, dtype=rp_dtype)
+            np.cumsum(row_nnzs, dtype=rp_dtype, out=rps[1:])
+            cis = np.zeros(nnz, dtype=np.int32)
+
+            if values is True:
+                vs = np.zeros(nnz)
+            elif values:
+                vs = np.zeros(nnz, dtype=values)
+            else:
+                vs = None
+
+            return cls(nrows, ncols, nnz, rps, cis, vs)
         else:
             return create_empty(nrows, ncols)
 
