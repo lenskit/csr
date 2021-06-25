@@ -54,7 +54,7 @@ channels = ["conda-forge"]
 
 [tool.envtool.conda.extras]
 mkl = [
-    "mkl-devel",
+    "mkl-devel=2020",
     "libblas=*=*mkl",
     "c-compiler"
 ]
