@@ -50,3 +50,24 @@ def test_large_init():
     assert csr.ncols == ncols
     assert csr.nnz == nnz
     assert csr.rowptrs.dtype == np.dtype('i8')
+
+
+def test_large_empty():
+    # 10M * 250 = 2.5B >= INT_MAX
+    nrows = 10000000
+    ncols = 500
+    nnz = nrows * 250
+
+    row_nnzs = np.full(nrows, 250, dtype='i4')
+
+    try:
+        csr = CSR.empty(nrows, ncols, row_nnzs=row_nnzs, values=False)
+    except MemoryError:
+        pytest.skip('insufficient memory')
+
+    assert csr.nrows == nrows
+    assert csr.ncols == ncols
+    assert csr.nnz == nnz
+    assert csr.rowptrs.dtype == np.dtype('i8')
+    assert np.all(csr.rowptrs >= 0)
+    assert np.all(np.cumsum(csr.rowptrs) == 250)
