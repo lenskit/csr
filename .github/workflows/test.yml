@@ -34,7 +34,7 @@ jobs:
       with:
         update-conda: true
         python-version: ${{ matrix.python }}
-        # conda-channels: conda-forge
+        conda-channels: conda-forge
 
     - name: Inspect environment
       run: |
@@ -55,7 +55,7 @@ jobs:
 
     - name: Run tests
       run: |
-        conda run -n csr python -m pytest --cov=csr
+        conda run -n csr python -m pytest --cov=csr -v
 
     - name: Run tests without JIT
       run: |
