@@ -74,9 +74,9 @@ class CSR(_csr_base):
     """
 
     def __new__(cls, nrows, ncols, nnz, rps, cis, vs, cast=True):
-        assert nrows >= INTC.min
+        assert nrows >= 0
         assert nrows <= INTC.max
-        assert ncols >= INTC.min
+        assert ncols >= 0
         assert ncols <= INTC.max
         nrows = np.intc(nrows)
         ncols = np.intc(ncols)
@@ -91,7 +91,6 @@ class CSR(_csr_base):
             return _csr_base.__new__(cls, nrows, ncols, nnz, rps, cis, vs)
         else:
             return _csr_base.__new__(cls)
-
 
     @classmethod
     def empty(cls, nrows, ncols, row_nnzs=None, values=True):
@@ -109,9 +108,10 @@ class CSR(_csr_base):
         from .constructors import create_empty, create_from_sizes
         if row_nnzs is not None:
             assert len(row_nnzs) == nrows
-            if nrows > 0 and np.max(row_nnzs) <= INTC.max:
-                row_nnzs = np.require(row_nnzs, np.intc)
-            return create_from_sizes(nrows, ncols, row_nnzs)
+            nnz = np.sum(row_nnzs, dtype=np.int64)
+            assert nnz >= 0
+            rp_dtype = np.intc if nnz <= INTC.max else np.int64
+            return create_from_sizes(nrows, ncols, row_nnzs, rp_dtype)
         else:
             return create_empty(nrows, ncols)
 
