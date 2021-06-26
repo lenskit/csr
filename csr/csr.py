@@ -242,6 +242,9 @@ class CSR(_csr_base):
             return vs
 
     def _e_value(self, i):
+        """
+        Get the value of a particular element, returning 1 if values is undefined.
+        """
         vs = self.values
         if vs is not None:
             return vs[i]
