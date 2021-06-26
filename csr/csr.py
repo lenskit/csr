@@ -582,7 +582,7 @@ class CSR(_csr_base):
         repr += '  rowptrs={}\n'.format(self.rowptrs)
         repr += '  colinds={}\n'.format(self.colinds)
         repr += '  values={}\n'.format(self.values)
-        repr += '}'
+        repr += '}>'
         return repr
 
     def __reduce__(self):
