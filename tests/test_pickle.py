@@ -25,12 +25,12 @@ def test_csr_pickle(csr):
         assert csr2.values is None
 
 
-@pytest.skip(reason='rethinking 64-bit support')
 @csr_slow()
 @given(csrs())
 def test_csr64_pickle(csr):
     csr = CSR(csr.nrows, csr.ncols, csr.nnz,
-              csr.rowptrs.astype(np.int64), csr.colinds, csr.values)
+              csr.rowptrs.astype(np.int64), csr.colinds, csr.values,
+              _cast=False)
 
     data = pickle.dumps(csr)
     csr2 = pickle.loads(data)
