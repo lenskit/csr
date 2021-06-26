@@ -254,6 +254,44 @@ class CSR(_csr_base):
         else:
             return 1.0
 
+    def _normalize(self, val_dtype=np.float64, ptr_dtype=None):
+        """
+        Normalize the matrix into a predictable structure and type.  It avoids copying
+        if possible.
+
+        .. note:: This method is not available from Numba.
+
+        Args:
+            val_dtype(np.dtype or None or boolean):
+                The value data type.  If ``False``, drop the value array.  If ``None``,
+                leave unchanged.
+            ptr_dtype(np.dtype or None):
+                The row pointer data type.  If ``None``, leave rows untransformed.
+        Returns:
+            CSR: the transformed CSR matrix.
+        """
+
+        if ptr_dtype:
+            info = np.iinfo(ptr_dtype)
+            if self.nnz > info.max:
+                raise ValueError(f'type {ptr_dtype} cannot address {self.nnz} entries')
+            rps = np.require(self.rowptrs, ptr_dtype)
+        else:
+            rps = self.rowptrs
+
+        if val_dtype:
+            if self.values is None:
+                vs = np.ones(self.nnz, val_dtype)
+            else:
+                vs = np.require(self.values, val_dtype)
+        elif val_dtype is False:
+            vs = None
+        else:
+            vs = self.values
+
+        return CSR(self.nrows, self.ncols, self.nnz, rps, self.colinds, vs, _cast=False)
+
+
     @property
     def R(self):
         warnings.warn('.R deprecated, use CSR directly', DeprecationWarning)
