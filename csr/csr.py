@@ -51,7 +51,8 @@ class CSR(_csr_base):
     * It is usable from code compiled in Numba's nopython mode.
 
     You generally don't want to create this class yourself with the constructor.  Instead, use one
-    of its class or static methods.
+    of its class or static methods.  If you do use the constructor, be advised that the class may
+    reuse the arrays that you pass, but does not guarantee that they will be used.
 
     Not all methods are available from Numba, and a few have restricted signatures.  The
     documentation for each method notes deviations when in Numba-compiled code.
