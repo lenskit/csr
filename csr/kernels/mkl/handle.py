@@ -76,14 +76,16 @@ def to_handle_jit(csr):
     else:
         vt = None
 
-    if vt == float64:
-        return _make_handle_impl
-    else:
-        def mkh(csr):
-            vs = csr._required_values().astype(np.float64)
-            csr2 = CSR(csr.nrows, csr.ncols, csr.nnz, csr.rowptrs, csr.colinds, vs)
-            return _make_handle(csr2)
-        return mkh
+    def mkh(csr):
+        vs = csr._required_values().astype(np.float64)
+        csr2 = CSR(csr.nrows, csr.ncols, csr.nnz, csr.rowptrs, csr.colinds, vs)
+
+        if csr.nnz == 0:
+            return mkl_h(0, csr.nrows, csr.ncols, csr2)
+
+        return _make_handle(csr2)
+
+    return mkh
 
 
 @njit
