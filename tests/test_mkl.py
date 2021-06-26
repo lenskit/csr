@@ -76,7 +76,7 @@ def test_large_mult_vec():
 
     csr = CSR(nrows, ncols, nnz, rowptrs, colinds, values)
 
-    v = np.random.nrand(ncols)
+    v = np.random.randn(ncols)
 
     res = csr.mult_vec(v)
 
