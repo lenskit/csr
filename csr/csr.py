@@ -17,11 +17,11 @@ INTC = np.iinfo(np.intc)
 # ugly hack for a bug on Numba < 0.53
 if config.DISABLE_JIT:
     class _csr_base:
-        def __init__(self, nrows, ncols, nnz, ptrs, inds, vals, cast=True):
+        def __init__(self, nrows, ncols, nnz, ptrs, inds, vals, _cast=True):
             self.nrows = nrows
             self.ncols = ncols
             self.nnz = nnz
-            if cast and np.max(ptrs, initial=0) <= INTC.max:
+            if _cast and np.max(ptrs, initial=0) <= INTC.max:
                 self.rowptrs = np.require(ptrs, np.intc, 'C')
             else:
                 self.rowptrs = np.require(ptrs, requirements='C')
