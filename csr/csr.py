@@ -86,6 +86,8 @@ class CSR(_csr_base):
         cis = np.require(cis, np.intc, 'C')
         if nnz <= INTC.max:
             rps = np.require(rps, np.intc, 'C')
+        else:
+            rps = np.require(rps, np.int64, 'C')
         if vs is not None:
             vs = np.require(vs, requirements='C')
 
