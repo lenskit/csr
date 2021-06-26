@@ -1,19 +1,19 @@
 import logging
 
 from hypothesis import settings
-from pytest import fixture
+from pytest import fixture, skip
 from csr import CSR
 from csr.kernels import use_kernel, get_kernel
 
 # turn off Numba logging
 logging.getLogger('numba').setLevel(logging.INFO)
 
-KERNELS = ["scipy", "numba"]
+KERNELS = ["scipy", "numba", "mkl"]
+DISABLED_KERNELS = []
 try:
     import csr.kernels.mkl  # noqa: F401
-    KERNELS.append("mkl")
 except ImportError:
-    pass  # no MKL available
+    DISABLED_KERNELS.append("mkl")
 
 
 # set up fixtures
@@ -24,6 +24,9 @@ def kernel(request):
     write a test function with a parameter ``kernel`` as its first parameter, it
     will be called once for each kernel under active test.
     """
+    if request.param in DISABLED_KERNELS:
+        skip(f'kernel {request.param} is disabled')
+
     with use_kernel(request.param):
         k = get_kernel()
         # warm-up the kernel
