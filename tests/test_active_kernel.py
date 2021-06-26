@@ -1,3 +1,4 @@
+import pytest
 from csr.kernels import _default_kernel, get_kernel, use_kernel
 default_kernel = _default_kernel()
 
@@ -23,6 +24,16 @@ def test_get_scipy():
 def test_get_numba():
     k = get_kernel('numba')
     assert k.__name__ == 'csr.kernels.numba'
+
+
+def test_get_mkl():
+    try:
+        import csr.kernels.mkl  # noqa: F401
+    except ImportError:
+        pytest.skip("kernel MKL is disabled")
+
+    k = get_kernel('mkl')
+    assert k.__name__ == 'csr.kernels.mkl'
 
 
 def test_with_scipy():
