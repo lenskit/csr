@@ -18,11 +18,11 @@ requires = [
 
 [tool.flit.metadata.requires-extra]
 test = [
-    "pytest",
-    "pytest-doctestplus",
-    "pytest-benchmark",
-    "pytest-cov",
-    "hypothesis"
+    "pytest >=6",
+    "pytest-doctestplus >=0.9",
+    "pytest-benchmark >=3",
+    "pytest-cov >=2.12",
+    "hypothesis >=6"
 ]
 dev = [
     "flake8",
@@ -54,7 +54,7 @@ channels = ["conda-forge"]
 
 [tool.envtool.conda.extras]
 mkl = [
-    "mkl-devel",
+    "mkl-devel=2020",
     "libblas=*=*mkl",
     "c-compiler"
 ]

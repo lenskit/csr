@@ -74,9 +74,9 @@ class CSR(_csr_base):
     """
 
     def __new__(cls, nrows, ncols, nnz, rps, cis, vs, cast=True):
-        assert nrows >= INTC.min
+        assert nrows >= 0
         assert nrows <= INTC.max
-        assert ncols >= INTC.min
+        assert ncols >= 0
         assert ncols <= INTC.max
         nrows = np.intc(nrows)
         ncols = np.intc(ncols)
@@ -92,7 +92,6 @@ class CSR(_csr_base):
         else:
             return _csr_base.__new__(cls)
 
-
     @classmethod
     def empty(cls, nrows, ncols, row_nnzs=None, values=True):
         """
@@ -103,15 +102,30 @@ class CSR(_csr_base):
             ncols(int): the number of columns.
             row_nnzs(array-like):
                 the number of nonzero entries for each row, or None for an empty matrix.
-            values(bool):
-                whether it has values or only structure.
+            values(bool, str, or numpy.dtype):
+                whether it has values or only structure; can be a NumPy data type to
+                specify a type other than `f8`.
         """
-        from .constructors import create_empty, create_from_sizes
+        from .constructors import create_empty
+        assert nrows >= 0
+        assert ncols >= 0
         if row_nnzs is not None:
             assert len(row_nnzs) == nrows
-            if nrows > 0 and np.max(row_nnzs) <= INTC.max:
-                row_nnzs = np.require(row_nnzs, np.intc)
-            return create_from_sizes(nrows, ncols, row_nnzs)
+            nnz = np.sum(row_nnzs, dtype=np.int64)
+            assert nnz >= 0
+            rp_dtype = np.intc if nnz <= INTC.max else np.int64
+            rps = np.zeros(nrows + 1, dtype=rp_dtype)
+            np.cumsum(row_nnzs, dtype=rp_dtype, out=rps[1:])
+            cis = np.zeros(nnz, dtype=np.int32)
+
+            if values is True:
+                vs = np.zeros(nnz)
+            elif values:
+                vs = np.zeros(nnz, dtype=values)
+            else:
+                vs = None
+
+            return cls(nrows, ncols, nnz, rps, cis, vs)
         else:
             return create_empty(nrows, ncols)
 

@@ -34,7 +34,7 @@ jobs:
       with:
         update-conda: true
         python-version: ${{ matrix.python }}
-        # conda-channels: conda-forge
+        conda-channels: conda-forge
 
     - name: Inspect environment
       run: |
@@ -47,15 +47,18 @@ jobs:
         python build-tools/flit-conda.py -E mkl --python-version ${{matrix.python}} --save-env environment.yml
         cat environment.yml
         conda env create -q -n csr -f environment.yml
-        conda list -n csr
 
-    - name: Compile MKL helper
+    - name: 🔎 Inspect environment
+      run: |
+        conda run -n csr numba -s
+
+    - name: 🛠 Compile MKL helper
       run: |
         conda run -n csr python build_mkl.py
 
     - name: Run tests
       run: |
-        conda run -n csr python -m pytest --cov=csr
+        conda run -n csr python -m pytest --cov=csr -v
 
     - name: Run tests without JIT
       run: |
