@@ -74,19 +74,20 @@ class CSR(_csr_base):
         values(numpy.ndarray or None): the values.
     """
 
-    def __new__(cls, nrows, ncols, nnz, rps, cis, vs, cast=True):
+    def __new__(cls, nrows, ncols, nnz, rps, cis, vs):
         assert nrows >= 0
         assert nrows <= INTC.max
         assert ncols >= 0
         assert ncols <= INTC.max
+        assert nnz >= 0
         nrows = np.intc(nrows)
         ncols = np.intc(ncols)
-        if cast:
-            cis = np.require(cis, np.intc, 'C')
-            if nnz <= INTC.max:
-                rps = np.require(rps, np.intc, 'C')
-            if vs is not None:
-                vs = np.require(vs, requirements='C')
+
+        cis = np.require(cis, np.intc, 'C')
+        if nnz <= INTC.max:
+            rps = np.require(rps, np.intc, 'C')
+        if vs is not None:
+            vs = np.require(vs, requirements='C')
 
         if NUMBA_ENABLED:
             return _csr_base.__new__(cls, nrows, ncols, nnz, rps, cis, vs)
@@ -541,5 +542,5 @@ class CSR(_csr_base):
         return repr
 
     def __reduce__(self):
-        args = (self.nrows, self.ncols, self.nnz, self.rowptrs, self.colinds, self.values, False)
+        args = (self.nrows, self.ncols, self.nnz, self.rowptrs, self.colinds, self.values)
         return (CSR, args)
