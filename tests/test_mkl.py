@@ -3,7 +3,7 @@ Various MKL-specific tests.
 """
 
 import pytest
-from numba import njit
+from numba import njit, prange
 import numpy as np
 
 from csr import CSR
@@ -43,6 +43,14 @@ def test_csr_handle(csr):
         assert np.all(csr2.values == 1.0)
 
 
+@njit(parallel=True)
+def fill_rows(colinds, nrows, ncols, dense):
+    for i in prange(nrows):
+        s = i * dense
+        e = s + dense
+        colinds[s:e] = np.random.choice(ncols, dense, replace=False)
+
+
 def test_large_mult_vec():
     # 10M * 500 = 2.5B >= INT_MAX
     nrows = 10000000
@@ -64,10 +72,7 @@ def test_large_mult_vec():
         pytest.skip('insufficient memory')
 
     print('randomizing colinds')
-    for i in range(nrows):
-        s = i * dense
-        e = s + dense
-        colinds[s:e] = np.random.choice(ncols, dense, replace=False)
+    fill_rows(colinds, nrows, ncols, dense)
 
     csr = CSR(nrows, ncols, nnz, rowptrs, colinds, values)
 
