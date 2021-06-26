@@ -54,15 +54,15 @@ jobs:
 
     - name: 🛠 Compile MKL helper
       run: |
-        conda run -n csr python build_mkl.py
+        conda run -n csr --no-capture-output python build_mkl.py
 
     - name: Run tests
       run: |
-        conda run -n csr python -m pytest --cov=csr -v
+        conda run -n csr --no-capture-output python -m pytest --cov=csr -v
 
     - name: Run tests without JIT
       run: |
-        conda run -n csr python -m pytest --cov=csr --cov-append --log-file=test-nojit.log --hypothesis-profile=nojit
+        conda run -n csr --no-capture-output python -m pytest --cov=csr --cov-append --log-file=test-nojit.log --hypothesis-profile=nojit
       env:
         NUMBA_DISABLE_JIT: 1
 

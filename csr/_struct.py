@@ -17,6 +17,16 @@ class CSRType(types.StructRef):
         "Query whether this CSR type has values."
         return not isinstance(self.field_dict['values'], types.NoneType)
 
+    @property
+    def ptr_type(self):
+        "The type of pointers into the data."
+        return self.field_dict['rowptrs']
+
+    @property
+    def val_type(self):
+        "The value type for the CSR"
+        return self.field_dict['values']
+
 
 @njit
 def get_nrows(self):

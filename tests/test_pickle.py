@@ -4,6 +4,7 @@ import pickle
 from csr import CSR
 from csr.test_utils import csrs, csr_slow
 
+import pytest
 from hypothesis import given
 
 
@@ -28,7 +29,8 @@ def test_csr_pickle(csr):
 @given(csrs())
 def test_csr64_pickle(csr):
     csr = CSR(csr.nrows, csr.ncols, csr.nnz,
-              csr.rowptrs.astype(np.int64), csr.colinds, csr.values, False)
+              csr.rowptrs.astype(np.int64), csr.colinds, csr.values,
+              _cast=False)
 
     data = pickle.dumps(csr)
     csr2 = pickle.loads(data)

@@ -17,11 +17,11 @@ INTC = np.iinfo(np.intc)
 # ugly hack for a bug on Numba < 0.53
 if config.DISABLE_JIT:
     class _csr_base:
-        def __init__(self, nrows, ncols, nnz, ptrs, inds, vals, cast=True):
+        def __init__(self, nrows, ncols, nnz, ptrs, inds, vals, _cast=True):
             self.nrows = nrows
             self.ncols = ncols
             self.nnz = nnz
-            if cast and np.max(ptrs, initial=0) <= INTC.max:
+            if _cast and np.max(ptrs, initial=0) <= INTC.max:
                 self.rowptrs = np.require(ptrs, np.intc, 'C')
             else:
                 self.rowptrs = np.require(ptrs, requirements='C')
@@ -51,7 +51,8 @@ class CSR(_csr_base):
     * It is usable from code compiled in Numba's nopython mode.
 
     You generally don't want to create this class yourself with the constructor.  Instead, use one
-    of its class or static methods.
+    of its class or static methods.  If you do use the constructor, be advised that the class may
+    reuse the arrays that you pass, but does not guarantee that they will be used.
 
     Not all methods are available from Numba, and a few have restricted signatures.  The
     documentation for each method notes deviations when in Numba-compiled code.
@@ -73,17 +74,21 @@ class CSR(_csr_base):
         values(numpy.ndarray or None): the values.
     """
 
-    def __new__(cls, nrows, ncols, nnz, rps, cis, vs, cast=True):
+    def __new__(cls, nrows, ncols, nnz, rps, cis, vs, _cast=True):
         assert nrows >= 0
         assert nrows <= INTC.max
         assert ncols >= 0
         assert ncols <= INTC.max
+        assert nnz >= 0
         nrows = np.intc(nrows)
         ncols = np.intc(ncols)
-        if cast:
+
+        if _cast:
             cis = np.require(cis, np.intc, 'C')
             if nnz <= INTC.max:
                 rps = np.require(rps, np.intc, 'C')
+            else:
+                rps = np.require(rps, np.int64, 'C')
             if vs is not None:
                 vs = np.require(vs, requirements='C')
 
@@ -240,11 +245,52 @@ class CSR(_csr_base):
             return vs
 
     def _e_value(self, i):
+        """
+        Get the value of a particular element, returning 1 if values is undefined.
+        """
         vs = self.values
         if vs is not None:
             return vs[i]
         else:
             return 1.0
+
+    def _normalize(self, val_dtype=np.float64, ptr_dtype=None):
+        """
+        Normalize the matrix into a predictable structure and type.  It avoids copying
+        if possible.
+
+        .. note:: This method is not available from Numba.
+
+        Args:
+            val_dtype(np.dtype or None or boolean):
+                The value data type.  If ``False``, drop the value array.  If ``None``,
+                leave unchanged.
+            ptr_dtype(np.dtype or None):
+                The row pointer data type.  If ``None``, leave rows untransformed.
+        Returns:
+            CSR: the transformed CSR matrix.
+        """
+
+        if ptr_dtype:
+            info = np.iinfo(ptr_dtype)
+            if self.nnz > info.max:
+                raise ValueError(f'type {ptr_dtype} cannot address {self.nnz} entries')
+            rps = np.require(self.rowptrs, ptr_dtype)
+        else:
+            rps = self.rowptrs
+
+        if val_dtype:
+            if self.values is None:
+                vs = np.ones(self.nnz, val_dtype)
+            else:
+                vs = np.require(self.values, val_dtype)
+        elif val_dtype is False:
+            vs = None
+        else:
+            vs = self.values
+
+        return CSR(self.nrows, self.ncols, self.nnz, rps, self.colinds, vs, _cast=False)
+
 
     @property
     def R(self):
@@ -536,7 +582,7 @@ class CSR(_csr_base):
         repr += '  rowptrs={}\n'.format(self.rowptrs)
         repr += '  colinds={}\n'.format(self.colinds)
         repr += '  values={}\n'.format(self.values)
-        repr += '}'
+        repr += '}>'
         return repr
 
     def __reduce__(self):

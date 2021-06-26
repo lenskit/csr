@@ -1,9 +1,11 @@
 import sys
 from typing import Optional
 import dataclasses
+from numba.core.types.functions import _ResolutionFailures
 import numpy as np
 from numba import njit, config
-from numba.core.types import StructRef
+from numba.extending import overload
+from numba.core.types import StructRef, intc, float64
 from numba.experimental import structref
 
 from csr import CSR
@@ -30,30 +32,60 @@ if config.DISABLE_JIT:
         H: int
         nrows: int
         ncols: int
-        values: Optional[np.ndarray]
+        csr_ref: Optional[np.ndarray]
 else:
     class mkl_h(structref.StructRefProxy):
         """
         Type for MKL handles.  Opaque, do not use directly.
         """
 
-    structref.define_proxy(mkl_h, mkl_h_type, ['H', 'nrows', 'ncols', 'values'])
+    structref.define_proxy(mkl_h, mkl_h_type, ['H', 'nrows', 'ncols', 'csr_ref'])
 
 
-@njit
-def to_handle(csr: CSR) -> mkl_h:
-    if csr.nnz == 0:
-        # empty matrices don't really work
-        return mkl_h(0, csr.nrows, csr.ncols, np.zeros(0))
-
+def _make_handle_impl(csr):
+    "Make a handle from a known-constructable CSR"
     _sp = ffi.from_buffer(csr.rowptrs)
     _cols = ffi.from_buffer(csr.colinds)
-    vs = csr._required_values()
+    vs = csr.values
     assert vs.size == csr.nnz
     _vals = ffi.from_buffer(vs)
     h = lk_mkl_spcreate(csr.nrows, csr.ncols, _sp, _cols, _vals)
     lk_mkl_spopt(h)
-    return mkl_h(h, csr.nrows, csr.ncols, vs)
+    return mkl_h(h, csr.nrows, csr.ncols, csr)
+
+
+_make_handle = njit(_make_handle_impl)
+
+
+def to_handle(csr: CSR) -> mkl_h:
+    if csr.nnz == 0:
+        # empty matrices don't really work
+        return mkl_h(0, csr.nrows, csr.ncols, None)
+
+    norm = csr._normalize(np.float64, np.intc)
+    return _make_handle(norm)
+
+
+@overload(to_handle)
+def to_handle_jit(csr):
+    if csr.ptr_type.dtype != intc:
+        raise TypeError('MKL requires intc row pointers')
+
+    if csr.has_values:
+        vt = csr.val_type.dtype
+    else:
+        vt = None
+
+    def mkh(csr):
+        vs = csr._required_values().astype(np.float64)
+        csr2 = CSR(csr.nrows, csr.ncols, csr.nnz, csr.rowptrs, csr.colinds, vs)
+
+        if csr.nnz == 0:
+            return mkl_h(0, csr.nrows, csr.ncols, csr2)
+
+        return _make_handle(csr2)
+
+    return mkh
 
 
 @njit
