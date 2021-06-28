@@ -19,4 +19,5 @@ bench*.json
 *.so
 *.dylib
 _*.c
+*.ipynb
 cov*.xml

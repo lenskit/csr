@@ -1,0 +1,2 @@
+formats = ["ipynb", "py:percent"]
+cell_metadata_filter = "-papermill,-tags"
