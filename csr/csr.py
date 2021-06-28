@@ -291,7 +291,6 @@ class CSR(_csr_base):
 
         return CSR(self.nrows, self.ncols, self.nnz, rps, self.colinds, vs, _cast=False)
 
-
     @property
     def R(self):
         warnings.warn('.R deprecated, use CSR directly', DeprecationWarning)
