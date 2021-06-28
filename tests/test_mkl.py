@@ -3,21 +3,38 @@ Various MKL-specific tests.
 """
 
 import logging
-import pytest
+from contextlib import contextmanager
 from numba import njit, prange
 import numpy as np
 
 from csr import CSR
-from csr.test_utils import csrs
+from csr.test_utils import csrs, sparse_matrices, mm_pairs
 
-from hypothesis import given
+from pytest import approx, fixture, skip
+from hypothesis import given, settings
+import hypothesis.strategies as st
+import hypothesis.extra.numpy as nph
+
+import test_multiply as tmm
+import test_mult_vec as tmv
+
 
 try:
     from csr.kernels import mkl
 except ImportError:
-    pytestmark = pytest.skip("MKL is not available")
+    pytestmark = skip("MKL is not available")
 
 _log = logging.getLogger(__name__)
+
+
+@contextmanager
+def mkl_lim(n=5000):
+    "Limit MKL to a capacity of X"
+    MKL_LIM = 1000
+    try:
+        yield MKL_LIM
+    finally:
+        pass
 
 
 @njit
@@ -55,6 +72,24 @@ def fill_rows(values, colinds, nrows, ncols, dense):
         colinds[s:e] = np.random.choice(ncols, dense, replace=False)
 
 
+def test_mult_vec_lim():
+    "Test matrix-vector multiply with limited kernel capacity"
+    with mkl_lim():
+        tmv.test_mult_vec(mkl)
+
+
+def test_multiply_lim():
+    "Test matrix-matrix multiply with limited kernel capacity"
+    with mkl_lim():
+        tmm.test_multiply(mkl)
+
+
+def test_multiply_transpose_lim():
+    "Select matrix-matrix transpose multiply with limited kernel capacity"
+    with mkl_lim():
+        tmm.test_multiply_transpose(mkl)
+
+
 def test_large_mult_vec():
     # 10M * 500 = 2.5B >= INT_MAX
     nrows = 10000000
@@ -73,7 +108,7 @@ def test_large_mult_vec():
         _log.info('allocating values')
         values = np.zeros(nnz)
     except MemoryError:
-        pytest.skip('insufficient memory')
+        skip('insufficient memory')
 
     _log.info('randomizing array contents')
     fill_rows(values, colinds, nrows, ncols, dense)
