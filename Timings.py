@@ -1,7 +1,7 @@
 # ---
 # jupyter:
 #   jupytext:
-#     cell_metadata_filter: -papermill,-tags
+#     cell_metadata_filter: -papermill
 #     text_representation:
 #       extension: .py
 #       format_name: percent
@@ -35,8 +35,11 @@ import seaborn as sns
 # %% [markdown]
 # Let's load the benchmark data:
 
+# %% tags=["parameters"]
+bench_file = 'bench.json'
+
 # %%
-with open('bench.json', 'r') as jsf:
+with open(bench_file, 'r') as jsf:
     data = json.load(jsf)
 list(data.keys())
 

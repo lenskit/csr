@@ -26,11 +26,12 @@ test = [
 ]
 dev = [
     "flake8",
-    "rstcheck"
+    "rstcheck",
+    "sphinx-autobuild >=2021",
 ]
 doc = [
-    "sphinx",
-    "sphinx_rtd_theme"
+    "sphinx >=4",
+    "furo"
 ]
 profile = [
     "notebook",

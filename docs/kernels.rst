@@ -35,12 +35,24 @@ with Conda; the conda-forge packages for Intel platforms include the MKL kernel.
 More kernels may be added in the future; for example, it may be useful to add a CUDA kernel,
 or if an optimized sparse matrix package for 64-bit ARM becomes available.
 
+There are two ways to access the kernel.  One is to import :py:mod:`csr.kernel` and use
+the functions directly; this uses the kernel selected at import time and cannot be
+dynamically changed.  Numba-optimized functions must use this access method; pure Python
+code generally doesn't need to access kernels directly, but may use either this method
+or dynamic selection (described in the next section).
+
 Dynamic Kernel Selection
 ------------------------
 
-The kernel used by the Python APIs can be changed at runtime as well.  This does **not**
-change the kernel exposed as ``csr.kernel``, which is used by Numba-compiled client
-functions.
+The kernel used by the Python APIs can be changed at runtime as well.  The Python implementations of
+the various methods provided by :py:class:`csr.CSR` use this API to access the active kernel, so
+changing the kernel with :py:func:`set_kernel` will change the kernel for pure Python code using
+``CSR`` and its methods, but will not change the code used for Numba-based code.  Dynamic kernel
+selection is primarily useful for testing and benchmarking.
+
+.. note::
+    This does **not** change the kernel exposed as ``csr.kernel``, which is used by
+    Numba-compiled client functions.
 
 .. autofunction:: get_kernel
 .. autofunction:: set_kernel
@@ -61,9 +73,6 @@ The kernel interface is built on opaque *handles*: a :py:class:`csr._CSR` needs 
 converted to a handle with :py:func:`to_handle`, and subsequent operations use that
 handle to access the matrix.  Handles must be *explicitly* released, or they will
 generally leak memory.
-
-Kernels must be created from the underlying native representation — you cannot directly pass
-an instance of :py:class:`csr.CSR`.
 
 .. autofunction:: to_handle
 .. autofunction:: from_handle

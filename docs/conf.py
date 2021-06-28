@@ -27,11 +27,11 @@ source_suffix = '.rst'
 pygments_style = 'sphinx'
 highlight_language = 'python3'
 
-html_theme = 'sphinx_rtd_theme'
+html_theme = 'furo'
 html_theme_options = {
-    'github_user': 'lenskit',
-    'github_repo': 'csr',
-    'travis_button': False,
+    # 'github_user': 'lenskit',
+    # 'github_repo': 'csr',
+    # 'travis_button': False,
     'html_baseurl': 'https://csr.lenskit.org/'
 }
 templates_path = ['_templates']
@@ -40,6 +40,7 @@ intersphinx_mapping = {
     'python': ('https://docs.python.org/3/', None),
     'numpy': ('https://docs.scipy.org/doc/numpy/', None),
     'scipy': ('https://docs.scipy.org/doc/scipy/reference/', None),
+    'numba': ('https://numba.readthedocs.io/en/stable/', None),
 }
 
 autodoc_default_options = {
