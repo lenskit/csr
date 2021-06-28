@@ -2,6 +2,7 @@
 Various MKL-specific tests.
 """
 
+import logging
 import pytest
 from numba import njit, prange
 import numpy as np
@@ -15,6 +16,8 @@ try:
     from csr.kernels import mkl
 except ImportError:
     pytestmark = pytest.skip("MKL is not available")
+
+_log = logging.getLogger(__name__)
 
 
 @njit
@@ -44,10 +47,11 @@ def test_csr_handle(csr):
 
 
 @njit(parallel=True)
-def fill_rows(colinds, nrows, ncols, dense):
+def fill_rows(values, colinds, nrows, ncols, dense):
     for i in prange(nrows):
         s = i * dense
         e = s + dense
+        values[s:e] = np.random.randn(e - s)
         colinds[s:e] = np.random.choice(ncols, dense, replace=False)
 
 
@@ -64,15 +68,15 @@ def test_large_mult_vec():
     assert rowptrs[-1] == nnz
 
     try:
-        print('allocating indexes')
+        _log.info('allocating indexes')
         colinds = np.empty(nnz, dtype=np.intc)
-        print('allocating values')
-        values = np.random.randn(nnz)
+        _log.info('allocating values')
+        values = np.zeros(nnz)
     except MemoryError:
         pytest.skip('insufficient memory')
 
-    print('randomizing colinds')
-    fill_rows(colinds, nrows, ncols, dense)
+    _log.info('randomizing array contents')
+    fill_rows(values, colinds, nrows, ncols, dense)
 
     csr = CSR(nrows, ncols, nnz, rowptrs, colinds, values)
 
