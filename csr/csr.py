@@ -3,6 +3,7 @@ Python API for CSR matrices.
 """
 
 import warnings
+import logging
 import numpy as np
 import scipy.sparse as sps
 
@@ -13,6 +14,7 @@ from csr.kernels import get_kernel, releasing
 from . import _struct, _rows
 
 INTC = np.iinfo(np.intc)
+_log = logging.getLogger(__name__)
 
 # ugly hack for a bug on Numba < 0.53
 if config.DISABLE_JIT:
@@ -552,6 +554,58 @@ class CSR(_csr_base):
 
         with releasing(K.to_handle(self), K) as h:
             return K.mult_vec(h, v)
+
+    def _shard_rows(self, tgt_nnz):
+        """
+        Shard a matrix by rows to fit in a target size.
+        """
+        assert tgt_nnz > 0
+
+        if self.nnz > tgt_nnz:
+            # find the first split point
+            split = np.searchsorted(self.rowptrs, tgt_nnz)
+            # if the start of the found row is too large, back up by one
+            if self.rowptrs[split] > tgt_nnz:
+                if split <= 1:
+                    raise ValueError("row too large to fit in target matrix size")
+                split -= 1
+
+            _log.debug('splitting %s at %d (rp@s: %d)', self, split, self.rowptrs[split])
+            shards = [self.subset_rows(0, split)]
+            rest = self.subset_rows(split, self.nrows)
+            shards += rest._shard_rows(tgt_nnz)
+            return shards
+        else:
+            return [self]
+
+    @classmethod
+    def _assemble_shards(cls, shards):
+        """
+        Reassemble a matrix from sharded rows.
+        """
+        nrows = sum(s.nrows for s in shards)
+        ncols = max(s.ncols for s in shards)
+        nnz = sum(s.nnz for s in shards)
+
+        rps = np.zeros(nrows + 1, np.int64)
+        rs = 0
+        for s in shards:
+            off = rps[rs]
+            re = rs + s.nrows + 1
+            rps[rs:re] = s.rowptrs + off
+            rs += s.nrows
+
+        assert rps[nrows] == nnz, f'{rps[nrows]} != {nnz}'
+
+        cis = np.concatenate([s.colinds for s in shards])
+        assert len(cis) == nnz
+        if shards[0].values is not None:
+            vs = np.concatenate([s.values for s in shards])
+            assert len(vs) == nnz
+        else:
+            vs = None
+
+        return cls(nrows, ncols, nnz, rps, cis, vs)
 
     def drop_values(self):
         """
