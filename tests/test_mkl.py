@@ -8,12 +8,10 @@ from numba import njit, prange
 import numpy as np
 
 from csr import CSR
-from csr.test_utils import csrs, sparse_matrices, mm_pairs
+from csr.test_utils import csrs
 
-from pytest import approx, fixture, skip
-from hypothesis import given, settings
-import hypothesis.strategies as st
-import hypothesis.extra.numpy as nph
+from pytest import skip, mark
+from hypothesis import given
 
 import test_multiply as tmm
 import test_mult_vec as tmv
@@ -80,12 +78,14 @@ def test_mult_vec_lim():
         tmv.test_mult_vec(mkl)
 
 
+@mark.skip('not yet implemented')
 def test_multiply_lim():
     "Test matrix-matrix multiply with limited kernel capacity"
     with mkl_lim():
         tmm.test_multiply(mkl)
 
 
+@mark.skip('not yet implemented')
 def test_multiply_transpose_lim():
     "Select matrix-matrix transpose multiply with limited kernel capacity"
     with mkl_lim():
