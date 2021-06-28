@@ -89,3 +89,16 @@ Multiplication
 .. autofunction:: mult_vec
 .. autofunction:: mult_ab
 .. autofunction:: mult_abt
+
+Additional Requirements
+~~~~~~~~~~~~~~~~~~~~~~~
+
+There are additional requirements for kernel implementations:
+
+.. py:attribute:: max_nnz
+    :type: int
+
+    This attribute stores the maximum number of non-zero entries supported by this kernel. It is not
+    exposed on the kernel module, but is exposed on dynamically-obtained kernels, and must be
+    provided by any kernel implementation.  It is used by :py:class:`csr._CSR` to automatically
+    handle matrices that are too large for a particular kernel when possible.

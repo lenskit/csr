@@ -10,6 +10,8 @@ from csr import CSR
 from .multiply import mult_ab, mult_abt  # noqa: F401
 from ...structure import sort_rows
 
+max_nnz = np.iinfo('i8').max
+
 
 @njit
 def to_handle(csr):

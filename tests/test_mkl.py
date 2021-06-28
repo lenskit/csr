@@ -28,12 +28,14 @@ _log = logging.getLogger(__name__)
 
 
 @contextmanager
-def mkl_lim(n=5000):
+def mkl_lim(lim=1000):
     "Limit MKL to a capacity of X"
-    MKL_LIM = 1000
+    save = mkl.max_nnz
     try:
-        yield MKL_LIM
+        mkl.max_nnz = lim
+        yield lim
     finally:
+        mkl.max_nnz = save
         pass
 
 

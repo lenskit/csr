@@ -8,6 +8,8 @@ import numpy as np
 from scipy.sparse import csr_matrix
 from csr import CSR
 
+max_nnz = np.iinfo('i8').max
+
 
 def to_handle(csr: CSR):
     values = csr.values

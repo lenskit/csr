@@ -521,6 +521,9 @@ class CSR(_csr_base):
             assert self.ncols == other.nrows
 
         K = get_kernel()
+        if self.nnz > K.max_nnz:
+            raise ValueError(f'matrix size {self.nnz} too large for kernel {K}')
+
         with releasing(K.to_handle(self), K) as a_h:
             with releasing(K.to_handle(other), K) as b_h:
                 if transpose:
@@ -544,6 +547,9 @@ class CSR(_csr_base):
         """
         assert v.shape == (self.ncols,)
         K = get_kernel()
+        if self.nnz > K.max_nnz:
+            raise ValueError(f'matrix size {self.nnz} too large for kernel {K}')
+
         with releasing(K.to_handle(self), K) as h:
             return K.mult_vec(h, v)
 
