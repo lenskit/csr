@@ -549,11 +549,16 @@ class CSR(_csr_base):
         """
         assert v.shape == (self.ncols,)
         K = get_kernel()
-        if self.nnz > K.max_nnz:
-            raise ValueError(f'matrix size {self.nnz} too large for kernel {K}')
-
-        with releasing(K.to_handle(self), K) as h:
-            return K.mult_vec(h, v)
+        if self.nnz <= K.max_nnz:
+            with releasing(K.to_handle(self), K) as h:
+                return K.mult_vec(h, v)
+        else:
+            shards = self._shard_rows(K.max_nnz)
+            svs = []
+            for s in shards:
+                with releasing(K.to_handle(s), K) as h:
+                    svs.append(K.mult_vec(h, v))
+            return np.concatenate(svs)
 
     def _shard_rows(self, tgt_nnz):
         """
