@@ -523,11 +523,10 @@ class CSR(_csr_base):
             assert self.ncols == other.nrows
 
         K = get_kernel()
-        if self.nnz > K.max_nnz:
-            raise ValueError(f'matrix size {self.nnz} too large for kernel {K}')
 
-        with releasing(K.to_handle(self), K) as a_h:
-            with releasing(K.to_handle(other), K) as b_h:
+        # Helper for handling sharding
+        def mul(A, b_h):
+            with releasing(K.to_handle(A), K) as a_h:
                 if transpose:
                     c_h = K.mult_abt(a_h, b_h)
                 else:
@@ -535,7 +534,18 @@ class CSR(_csr_base):
                 with releasing(c_h, K):
                     crepr = K.from_handle(c_h)
 
-        return crepr
+            return crepr
+
+        if self.nnz <= K.max_nnz:
+            # Common / fast path - one matrix
+            with releasing(K.to_handle(other), K) as b_h:
+                return mul(self, b_h)
+        else:
+            # Too large, let's go sharding
+            shards = self._shard_rows(K.max_nnz)
+            with releasing(K.to_handle(other), K) as b_h:
+                sparts = [mul(s, b_h) for s in shards]
+            return CSR._assemble_shards(sparts)
 
     def mult_vec(self, v):
         """

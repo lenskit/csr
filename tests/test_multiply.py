@@ -4,7 +4,7 @@ from csr import CSR
 from csr.test_utils import mm_pairs
 
 from pytest import approx
-from hypothesis import given, settings
+from hypothesis import given, settings, assume
 
 _log = logging.getLogger(__name__)
 
@@ -15,6 +15,7 @@ def test_multiply(kernel, pair):
     A, B = pair
     csra = CSR.from_scipy(A)
     csrb = CSR.from_scipy(B)
+    assume(csrb.nnz <= kernel.max_nnz)
 
     prod = csra.multiply(csrb)
     assert isinstance(prod, CSR)
@@ -47,6 +48,7 @@ def test_multiply_transpose(kernel, pair):
     A, B = pair
     csra = CSR.from_scipy(A)
     csrb = CSR.from_scipy(B.T)
+    assume(csrb.nnz <= kernel.max_nnz)
 
     prod = csra.multiply(csrb, transpose=True)
     assert isinstance(prod, CSR)

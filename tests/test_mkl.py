@@ -78,14 +78,12 @@ def test_mult_vec_lim():
         tmv.test_mult_vec(mkl)
 
 
-@mark.skip('not yet implemented')
 def test_multiply_lim():
     "Test matrix-matrix multiply with limited kernel capacity"
     with mkl_lim():
         tmm.test_multiply(mkl)
 
 
-@mark.skip('not yet implemented')
 def test_multiply_transpose_lim():
     "Select matrix-matrix transpose multiply with limited kernel capacity"
     with mkl_lim():
