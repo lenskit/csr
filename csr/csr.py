@@ -3,6 +3,7 @@ Python API for CSR matrices.
 """
 
 import warnings
+import logging
 import numpy as np
 import scipy.sparse as sps
 
@@ -13,6 +14,7 @@ from csr.kernels import get_kernel, releasing
 from . import _struct, _rows
 
 INTC = np.iinfo(np.intc)
+_log = logging.getLogger(__name__)
 
 # ugly hack for a bug on Numba < 0.53
 if config.DISABLE_JIT:
@@ -291,7 +293,6 @@ class CSR(_csr_base):
 
         return CSR(self.nrows, self.ncols, self.nnz, rps, self.colinds, vs, _cast=False)
 
-
     @property
     def R(self):
         warnings.warn('.R deprecated, use CSR directly', DeprecationWarning)
@@ -522,8 +523,10 @@ class CSR(_csr_base):
             assert self.ncols == other.nrows
 
         K = get_kernel()
-        with releasing(K.to_handle(self), K) as a_h:
-            with releasing(K.to_handle(other), K) as b_h:
+
+        # Helper for handling sharding
+        def mul(A, b_h):
+            with releasing(K.to_handle(A), K) as a_h:
                 if transpose:
                     c_h = K.mult_abt(a_h, b_h)
                 else:
@@ -531,7 +534,18 @@ class CSR(_csr_base):
                 with releasing(c_h, K):
                     crepr = K.from_handle(c_h)
 
-        return crepr
+            return crepr
+
+        if self.nnz <= K.max_nnz:
+            # Common / fast path - one matrix
+            with releasing(K.to_handle(other), K) as b_h:
+                return mul(self, b_h)
+        else:
+            # Too large, let's go sharding
+            shards = self._shard_rows(K.max_nnz)
+            with releasing(K.to_handle(other), K) as b_h:
+                sparts = [mul(s, b_h) for s in shards]
+            return CSR._assemble_shards(sparts)
 
     def mult_vec(self, v):
         """
@@ -545,8 +559,69 @@ class CSR(_csr_base):
         """
         assert v.shape == (self.ncols,)
         K = get_kernel()
-        with releasing(K.to_handle(self), K) as h:
-            return K.mult_vec(h, v)
+        if self.nnz <= K.max_nnz:
+            with releasing(K.to_handle(self), K) as h:
+                return K.mult_vec(h, v)
+        else:
+            shards = self._shard_rows(K.max_nnz)
+            svs = []
+            for s in shards:
+                with releasing(K.to_handle(s), K) as h:
+                    svs.append(K.mult_vec(h, v))
+            return np.concatenate(svs)
+
+    def _shard_rows(self, tgt_nnz):
+        """
+        Shard a matrix by rows to fit in a target size.
+        """
+        assert tgt_nnz > 0
+
+        rest = self
+        shards = []
+        while rest.nnz > tgt_nnz:
+            # find the first split point
+            split = np.searchsorted(rest.rowptrs, tgt_nnz)
+            # if the start of the found row is too large, back up by one
+            if rest.rowptrs[split] > tgt_nnz:
+                if split <= 1:
+                    raise ValueError("row too large to fit in target matrix size")
+                split -= 1
+
+            _log.debug('splitting %s at %d (rp@s: %d)', rest, split, rest.rowptrs[split])
+            shards.append(rest.subset_rows(0, split))
+            rest = rest.subset_rows(split, rest.nrows)
+
+        shards.append(rest)
+        return shards
+
+    @classmethod
+    def _assemble_shards(cls, shards):
+        """
+        Reassemble a matrix from sharded rows.
+        """
+        nrows = sum(s.nrows for s in shards)
+        ncols = max(s.ncols for s in shards)
+        nnz = sum(s.nnz for s in shards)
+
+        rps = np.zeros(nrows + 1, np.int64)
+        rs = 0
+        for s in shards:
+            off = rps[rs]
+            re = rs + s.nrows + 1
+            rps[rs:re] = s.rowptrs + off
+            rs += s.nrows
+
+        assert rps[nrows] == nnz, f'{rps[nrows]} != {nnz}'
+
+        cis = np.concatenate([s.colinds for s in shards])
+        assert len(cis) == nnz
+        if shards[0].values is not None:
+            vs = np.concatenate([s.values for s in shards])
+            assert len(vs) == nnz
+        else:
+            vs = None
+
+        return cls(nrows, ncols, nnz, rps, cis, vs)
 
     def drop_values(self):
         """

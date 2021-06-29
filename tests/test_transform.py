@@ -141,3 +141,32 @@ def test_filter(mat):
     df = csrf.to_scipy().toarray()
     d1[d1 < 0] = 0
     assert df == approx(d1)
+
+
+# @csr_slow()
+@given(sparse_matrices())
+def test_shard(mat):
+    SHARD_SIZE = 1000
+    csr = CSR.from_scipy(mat)
+
+    shards = csr._shard_rows(SHARD_SIZE)
+    # we have the whole matrix
+    assert sum(s.nnz for s in shards) == csr.nnz
+    # everything is in spec
+    assert all(s.nnz <= SHARD_SIZE for s in shards)
+
+    # all row counts match
+    assert np.all(np.concatenate([s.row_nnzs() for s in shards]) == csr.row_nnzs())
+    # all column indices match
+    assert np.all(np.concatenate([s.colinds for s in shards]) == csr.colinds)
+    # all values match
+    assert np.all(np.concatenate([s.values for s in shards]) == csr.values)
+
+    # we can reassemble the shards
+    csr2 = CSR._assemble_shards(shards)
+    assert csr2.nrows == csr.nrows
+    assert csr2.ncols == csr.ncols
+    assert csr2.nnz == csr.nnz
+    assert np.all(csr2.rowptrs == csr.rowptrs)
+    assert np.all(csr2.colinds == csr.colinds)
+    assert np.all(csr2.values == csr.values)
