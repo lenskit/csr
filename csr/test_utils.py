@@ -5,6 +5,7 @@ CSR test utilities.
 import numpy as np
 import scipy.sparse as sps
 
+import psutil
 from hypothesis import settings, HealthCheck
 import hypothesis.strategies as st
 import hypothesis.extra.numpy as nph
@@ -84,3 +85,9 @@ def csr_slow(divider=2):
     dft = settings.default
     return settings(dft, deadline=None, suppress_health_check=HealthCheck.all(),
                     max_examples=dft.max_examples // divider)
+
+
+def has_memory(req_gb=32):
+    req_bytes = req_gb * 1024 * 1024 * 1024
+    vm = psutil.virtual_memory()
+    return vm.total >= req_bytes

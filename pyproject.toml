@@ -22,7 +22,8 @@ test = [
     "pytest-doctestplus >=0.9",
     "pytest-benchmark >=3",
     "pytest-cov >=2.12",
-    "hypothesis >=6"
+    "hypothesis >=6",
+    "psutil >=5"
 ]
 dev = [
     "flake8",
