@@ -21,12 +21,12 @@ def fractions(**kwargs):
 def csrs(draw, nrows=None, ncols=None, nnz=None, values=None):
     "Draw CSR matrices by generating COO data."
     if ncols is None:
-        ncols = draw(st.integers(1, 100))
+        ncols = draw(st.integers(1, 80))
     elif not isinstance(ncols, int):
         ncols = draw(ncols)
 
     if nrows is None:
-        nrows = draw(st.integers(1, 100))
+        nrows = draw(st.integers(1, 80))
     elif not isinstance(nrows, int):
         nrows = draw(nrows)
 
