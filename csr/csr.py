@@ -576,22 +576,24 @@ class CSR(_csr_base):
         """
         assert tgt_nnz > 0
 
-        if self.nnz > tgt_nnz:
+        rest = self
+        shards = []
+        while rest.nnz > tgt_nnz:
             # find the first split point
-            split = np.searchsorted(self.rowptrs, tgt_nnz)
+            split = np.searchsorted(rest.rowptrs, tgt_nnz)
             # if the start of the found row is too large, back up by one
-            if self.rowptrs[split] > tgt_nnz:
+            if rest.rowptrs[split] > tgt_nnz:
                 if split <= 1:
                     raise ValueError("row too large to fit in target matrix size")
                 split -= 1
 
-            _log.debug('splitting %s at %d (rp@s: %d)', self, split, self.rowptrs[split])
-            shards = [self.subset_rows(0, split)]
-            rest = self.subset_rows(split, self.nrows)
-            shards += rest._shard_rows(tgt_nnz)
+            _log.debug('splitting %s at %d (rp@s: %d)', rest, split, rest.rowptrs[split])
+            shards.append(rest.subset_rows(0, split))
+            rest = rest.subset_rows(split, rest.nrows)
             return shards
-        else:
-            return [self]
+
+        shards.append(rest)
+        return shards
 
     @classmethod
     def _assemble_shards(cls, shards):
