@@ -590,7 +590,6 @@ class CSR(_csr_base):
             _log.debug('splitting %s at %d (rp@s: %d)', rest, split, rest.rowptrs[split])
             shards.append(rest.subset_rows(0, split))
             rest = rest.subset_rows(split, rest.nrows)
-            return shards
 
         shards.append(rest)
         return shards
