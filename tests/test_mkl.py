@@ -8,7 +8,7 @@ from numba import njit, prange
 import numpy as np
 
 from csr import CSR
-from csr.test_utils import csrs
+from csr.test_utils import csrs, has_memory
 
 from pytest import skip, mark
 from hypothesis import given
@@ -20,7 +20,7 @@ import test_mult_vec as tmv
 try:
     from csr.kernels import mkl
 except ImportError:
-    pytestmark = skip("MKL is not available")
+    pytestmark = mark.skip("MKL is not available")
 
 _log = logging.getLogger(__name__)
 
@@ -90,6 +90,7 @@ def test_multiply_transpose_lim():
         tmm.test_multiply_transpose(mkl)
 
 
+@mark.skipif(not has_memory(32), reason='insufficient memory')
 def test_large_mult_vec():
     # 10M * 500 = 2.5B >= INT_MAX
     nrows = 10000000

@@ -1,4 +1,5 @@
 from csr import CSR, constructors
+from csr.test_utils import has_memory
 import numpy as np
 
 import pytest
@@ -52,6 +53,7 @@ def test_create_from_sizes(data, nrows, ncols):
     assert len(csr.colinds) == np.sum(sizes)
 
 
+@pytest.mark.skipif(not has_memory(12), reason='insufficient memory')
 def test_large_init():
     # 10M * 500 = 5B >= INT_MAX
     nrows = 10000000
@@ -74,6 +76,7 @@ def test_large_init():
     assert csr.rowptrs.dtype == np.dtype('i8')
 
 
+@pytest.mark.skipif(not has_memory(12), reason='insufficient memory')
 def test_large_empty():
     # 10M * 250 = 2.5B >= INT_MAX
     nrows = 10000000

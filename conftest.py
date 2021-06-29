@@ -1,6 +1,6 @@
 import logging
 
-from hypothesis import settings
+from hypothesis import settings, HealthCheck
 from pytest import fixture, skip
 from csr import CSR
 from csr.kernels import use_kernel, get_kernel
@@ -38,10 +38,10 @@ def kernel(request):
 
 
 # set up profiles
-settings.register_profile('default', deadline=1500)
+settings.register_profile('default', deadline=2500)
 settings.register_profile('large', settings.get_profile('default'),
                           max_examples=5000, deadline=None)
-settings.register_profile('fast', max_examples=10)
+settings.register_profile('fast', max_examples=20)
 settings.register_profile('nojit', settings.get_profile('fast'),
-                          deadline=None)
+                          deadline=None, suppress_health_check=HealthCheck.all())
 settings.load_profile('default')

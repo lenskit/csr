@@ -9,10 +9,10 @@ author-email = "michaelekstrand@boisestate.edu"
 home-page = "https://csr.lenskit.org"
 classifiers = ["License :: OSI Approved :: MIT License"]
 description-file = "README.md"
-requires-python = ">= 3.6.1"
+requires-python = ">= 3.7"
 requires = [
     "numba >=0.51,<0.54",
-    "numpy >=1.16",
+    "numpy >=1.17",
     "scipy ==1.*"
 ]
 
@@ -22,7 +22,8 @@ test = [
     "pytest-doctestplus >=0.9",
     "pytest-benchmark >=3",
     "pytest-cov >=2.12",
-    "hypothesis >=6"
+    "hypothesis >=6",
+    "psutil >=5"
 ]
 dev = [
     "flake8",

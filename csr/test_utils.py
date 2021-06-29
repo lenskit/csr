@@ -5,6 +5,7 @@ CSR test utilities.
 import numpy as np
 import scipy.sparse as sps
 
+import psutil
 from hypothesis import settings, HealthCheck
 import hypothesis.strategies as st
 import hypothesis.extra.numpy as nph
@@ -20,12 +21,12 @@ def fractions(**kwargs):
 def csrs(draw, nrows=None, ncols=None, nnz=None, values=None):
     "Draw CSR matrices by generating COO data."
     if ncols is None:
-        ncols = draw(st.integers(1, 100))
+        ncols = draw(st.integers(1, 80))
     elif not isinstance(ncols, int):
         ncols = draw(ncols)
 
     if nrows is None:
-        nrows = draw(st.integers(1, 100))
+        nrows = draw(st.integers(1, 80))
     elif not isinstance(nrows, int):
         nrows = draw(nrows)
 
@@ -84,3 +85,9 @@ def csr_slow(divider=2):
     dft = settings.default
     return settings(dft, deadline=None, suppress_health_check=HealthCheck.all(),
                     max_examples=dft.max_examples // divider)
+
+
+def has_memory(req_gb=32):
+    req_bytes = req_gb * 1024 * 1024 * 1024
+    vm = psutil.virtual_memory()
+    return vm.total >= req_bytes
