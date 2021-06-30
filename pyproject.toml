@@ -26,6 +26,8 @@ test = [
     "psutil >=5"
 ]
 dev = [
+    "flit",
+    "keyring",
     "flake8",
     "rstcheck",
     "sphinx-autobuild >=2021",
