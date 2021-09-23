@@ -9,7 +9,7 @@ on:
 
 jobs:
   test:
-    name: Test with Python ${{matrix.python}} on ${{matrix.platform}}
+    name: Test with Python ${{matrix.python}} on ${{matrix.platform} ${{matrix.numba}}
     runs-on: ${{matrix.platform}}-latest
     strategy:
       fail-fast: false
@@ -22,6 +22,19 @@ jobs:
         - 3.7
         - 3.8
         - 3.9
+        include:
+          - platform: ubuntu
+            python: 3.8
+            numba: 0.51
+          - platform: ubuntu
+            python: 3.8
+            numba: 0.52
+          - platform: ubuntu
+            python: 3.8
+            numba: 0.53
+          - platform: ubuntu
+            python: 3.8
+            numba: 0.54
 
     steps:
     - uses: actions/checkout@v2
@@ -46,8 +59,15 @@ jobs:
 
     - name: Prepare environment
       run: |
-        python build-tools/flit-conda.py -E mkl --python-version ${{matrix.python}} --save-env environment.yml
+        extra=
+        if [ -n "$NUMBA_VER" ]; then
+          extra="--add-dep numba=$NUMBA_VER"
+        fi
+        python build-tools/flit-conda.py -E mkl --python-version ${{matrix.python}} $extra --save-env environment.yml
         cat environment.yml
+      shell: bash
+      env:
+        NUMBA_VER: ${{matrix.numba}}
 
     - name: Create Conda environment
       run: |
