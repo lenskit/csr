@@ -29,6 +29,8 @@ def parse_args():
                         help='use Python version VER')
     parser.add_argument('--extra', '-E', metavar='EXTRA', action='append',
                         help='include EXTRA')
+    parser.add_argument('--add-dep', metavar='DEP', action='append',
+                        help='add additional dependency DEP')
     parser.add_argument('--name', '-n', metavar='NAME',
                         help='name Conda environment NAME')
     parser.add_argument('--no-dev', action='store_true', help='skip dev dependencies')
@@ -147,6 +149,9 @@ def conda_env(args, pyp, flp):
                     deps.append(dep_str(cfg, req))
         for cr in cfg.extras.get(e, []):
             deps.append(str(cr))
+
+    for dep in args.add_dep:
+        deps.append(dep)
 
     if pip_deps:
         deps.append({'pip': [str(r) for r in pip_deps]})
