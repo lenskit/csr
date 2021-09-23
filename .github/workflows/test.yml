@@ -40,12 +40,18 @@ jobs:
         conda info
         conda info -s
 
-    - name: Set up dependencies
+    - name: Install pre-environment dependencies
       run: |
-        conda install -qy flit-core packaging pyyaml
+        conda install -qy -c conda-forge mamba flit-core packaging pyyaml
+
+    - name: Prepare environment
+      run: |
         python build-tools/flit-conda.py -E mkl --python-version ${{matrix.python}} --save-env environment.yml
         cat environment.yml
-        conda env create -q -n csr -f environment.yml
+
+    - name: Create Conda environment
+      run: |
+        mamba env create -q -n csr -f environment.yml
 
     - name: 🔎 Inspect environment
       run: |
