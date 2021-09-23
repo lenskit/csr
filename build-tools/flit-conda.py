@@ -150,8 +150,9 @@ def conda_env(args, pyp, flp):
         for cr in cfg.extras.get(e, []):
             deps.append(str(cr))
 
-    for dep in args.add_dep:
-        deps.append(dep)
+    if args.add_dep:
+        for dep in args.add_dep:
+            deps.append(dep)
 
     if pip_deps:
         deps.append({'pip': [str(r) for r in pip_deps]})
