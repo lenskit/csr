@@ -9,7 +9,7 @@ on:
 
 jobs:
   test:
-    name: Test with Python ${{matrix.python}} on ${{matrix.platform}} ${{matrix.numba}}
+    name: Test with Python ${{matrix.python}} on ${{matrix.platform} ${{matrix.numba}}
     runs-on: ${{matrix.platform}}-latest
     strategy:
       fail-fast: false
