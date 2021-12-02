@@ -7,6 +7,10 @@ on:
     types: [published]
   pull_request:
 
+defaults:
+  run:
+    shell: bash -l {0}
+
 jobs:
   test:
     name: Test with Python ${{matrix.python}} on ${{matrix.platform}}
@@ -28,51 +32,47 @@ jobs:
       with:
         fetch-depth: 0
 
-    - name: Setup conda
-      uses: s-weigand/setup-conda@v1
+    - name: Prepare Windows environment
+      if: runner.os == 'Windows'
+      shell: pwsh
+      run: |
+        choco install wget --no-progress
+
+    - name: Prepare Conda environment spec
+      id: conda-lock
+      shell: bash
+      run: |
+        bash lkbuild/lock-for-ci.sh -v $PYVER -b mkl
+      env:
+        RUNNER: ${{runner.os}}
+        PYVER: ${{matrix.python}}
+
+    - name: Initialize Conda
+      uses: conda-incubator/setup-miniconda@v2
       with:
-        update-conda: true
-        python-version: ${{ matrix.python }}
-        conda-channels: conda-forge
-
-    - name: Inspect environment
-      run: |
-        conda info
-        conda info -s
-
-    - name: Install pre-environment dependencies
-      run: |
-        conda install -qy -c conda-forge mamba flit-core packaging pyyaml
-
-    - name: Prepare environment
-      run: |
-        python build-tools/flit-conda.py -E mkl --python-version ${{matrix.python}} --save-env environment.yml
-        cat environment.yml
-
-    - name: Create Conda environment
-      run: |
-        mamba env create -q -n csr -f environment.yml
+        activate-environment: csr
+        environment-file: ${{steps.conda-lock.outputs.environment-file}}
 
     - name: 🔎 Inspect environment
       run: |
-        conda run -n csr numba -s
+        numba -s
 
     - name: 🛠 Compile MKL helper
       run: |
-        conda run -n csr --no-capture-output python build_mkl.py
+        python build_mkl.py
 
     - name: Run tests
       run: |
-        conda run -n csr --no-capture-output python -m pytest --cov=csr -v
+        python -m pytest --cov=csr -v
 
     - name: Run tests without JIT
       run: |
-        conda run -n csr --no-capture-output python -m pytest --cov=csr --cov-append --log-file=test-nojit.log --hypothesis-profile=nojit
+        python -m pytest --cov=csr --cov-append --log-file=test-nojit.log --hypothesis-profile=nojit
       env:
         NUMBA_DISABLE_JIT: 1
 
     - name: Aggregate coverage data
-      run: conda run -n csr coverage xml
+      run: coverage xml
 
     - name: Upload coverage
       uses: codecov/codecov-action@v1
