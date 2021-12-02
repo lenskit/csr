@@ -42,7 +42,7 @@ jobs:
       id: conda-lock
       shell: bash
       run: |
-        bash lkbuild/lock-for-ci.sh -v $PYVER -b mkl
+        bash lkbuild/lock-for-ci.sh -v $PYVER -m mkl-devel.yml
       env:
         RUNNER: ${{runner.os}}
         PYVER: ${{matrix.python}}
