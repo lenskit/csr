@@ -30,6 +30,8 @@ dev = [
     "keyring",
     "flake8",
     "rstcheck",
+    "invoke",
+    "conda-lock>=0.13.2",
     "sphinx-autobuild >=2021",
 ]
 doc = [
@@ -52,6 +54,9 @@ exclude = [
     ".github",
     "*.ipynb"
 ]
+
+[tool.conda-lock]
+channels = ['conda-forge']
 
 [tool.envtool.conda]
 name = "csr"
