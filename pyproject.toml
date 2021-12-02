@@ -30,6 +30,7 @@ dev = [
     "keyring",
     "flake8",
     "rstcheck",
+    "conda-lock>=0.13.2",
     "sphinx-autobuild >=2021",
 ]
 doc = [
