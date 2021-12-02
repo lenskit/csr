@@ -53,6 +53,9 @@ exclude = [
     "*.ipynb"
 ]
 
+[tool.conda-lock]
+channels = ['conda-forge']
+
 [tool.envtool.conda]
 name = "csr"
 channels = ["conda-forge"]
