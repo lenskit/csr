@@ -49,6 +49,7 @@ def test_csr_transpose_coords():
 
 
 def test_csr_transpose_erow():
+    "Test transposition with an empty output row"
     nrows = np.random.randint(10, 1000)
     ncols = np.random.randint(10, 500)
     mat = np.random.randn(nrows, ncols)
