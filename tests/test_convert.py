@@ -1,3 +1,4 @@
+import logging
 import numpy as np
 import scipy.sparse as sps
 
@@ -8,6 +9,8 @@ from pytest import mark, approx, raises
 from hypothesis import given, assume, settings, HealthCheck
 import hypothesis.strategies as st
 import hypothesis.extra.numpy as nph
+
+_log = logging.getLogger(__name__)
 
 
 @mark.parametrize('copy', [True, False])
@@ -64,7 +67,7 @@ def test_csr_is_numpy_compatible():
     assert d2 == approx(smat.data * 10)
 
 
-def test_csr_from_coo():
+def test_csr_from_coo_fixed():
     "Make a CSR from COO data"
     rows = np.array([0, 0, 1, 3], dtype=np.int32)
     cols = np.array([1, 2, 0, 1], dtype=np.int32)
@@ -77,58 +80,80 @@ def test_csr_from_coo():
     assert csr.values == approx(vals)
 
 
-def test_csr_from_coo_rand():
-    for i in range(100):
-        coords = np.random.choice(np.arange(50 * 100, dtype=np.int32), 1000, False)
-        rows = np.mod(coords, 100, dtype=np.int32)
-        cols = np.floor_divide(coords, 100, dtype=np.int32)
-        vals = np.random.randn(1000)
+@given(st.data(), st.integers(0, 100), st.integers(0, 100),
+       st.sampled_from(['f4', 'f8']))
+def test_csr_from_coo(data, nrows, ncols, dtype):
+    dtype = np.dtype(dtype)
+    n = nrows * ncols
+    nnz = data.draw(st.integers(0, int(n * 0.75)))
+    _log.info('testing %d×%d (%d nnz) of type %s', nrows, ncols, nnz, dtype)
 
-        csr = CSR.from_coo(rows, cols, vals, (100, 50))
-        rowinds = csr.rowinds()
-        assert csr.nrows == 100
-        assert csr.ncols == 50
-        assert csr.nnz == 1000
+    coords = st.integers(0, max(n - 1, 0))
+    coords = data.draw(nph.arrays(np.int32, nnz, elements=coords, unique=True))
+    rows = np.mod(coords, nrows, dtype=np.int32)
+    cols = np.floor_divide(coords, nrows, dtype=np.int32)
 
-        for i in range(100):
-            sp = csr.rowptrs[i]
-            ep = csr.rowptrs[i+1]
-            assert ep - sp == np.sum(rows == i)
-            points, = np.nonzero(rows == i)
-            assert len(points) == ep - sp
-            po = np.argsort(cols[points])
-            points = points[po]
-            assert all(np.sort(csr.colinds[sp:ep]) == cols[points])
-            assert all(np.sort(csr.row_cs(i)) == cols[points])
-            assert all(csr.values[np.argsort(csr.colinds[sp:ep]) + sp] == vals[points])
-            assert all(rowinds[sp:ep] == i)
+    finite = nph.from_dtype(dtype, allow_infinity=False, allow_nan=False)
+    vals = data.draw(nph.arrays(dtype, nnz, elements=finite))
 
-            row = np.zeros(50)
-            row[cols[points]] = vals[points]
-            assert np.sum(csr.row(i)) == approx(np.sum(vals[points]))
-            assert all(csr.row(i) == row)
+    csr = CSR.from_coo(rows, cols, vals, (nrows, ncols))
+
+    rowinds = csr.rowinds()
+    assert csr.nrows == nrows
+    assert csr.ncols == ncols
+    assert csr.nnz == nnz
+
+    for i in range(nrows):
+        sp = csr.rowptrs[i]
+        ep = csr.rowptrs[i + 1]
+        assert ep - sp == np.sum(rows == i)
+        points, = np.nonzero(rows == i)
+        assert len(points) == ep - sp
+        po = np.argsort(cols[points])
+        points = points[po]
+        assert all(np.sort(csr.colinds[sp:ep]) == cols[points])
+        assert all(np.sort(csr.row_cs(i)) == cols[points])
+        assert all(csr.values[np.argsort(csr.colinds[sp:ep]) + sp] == vals[points])
+        assert all(rowinds[sp:ep] == i)
+
+        row = np.zeros(ncols, dtype)
+        row[cols[points]] = vals[points]
+        assert np.sum(csr.row(i)) == approx(np.sum(vals[points]))
+        assert all(csr.row(i) == row)
 
 
-def test_csr_from_coo_novals():
-    for i in range(50):
-        coords = np.random.choice(np.arange(50 * 100, dtype=np.int32), 1000, False)
-        rows = np.mod(coords, 100, dtype=np.int32)
-        cols = np.floor_divide(coords, 100, dtype=np.int32)
+@given(st.data(), st.integers(0, 100), st.integers(0, 100))
+def test_csr_from_coo_novals(data, nrows, ncols):
+    n = nrows * ncols
+    nnz = data.draw(st.integers(0, int(n * 0.75)))
+    _log.info('testing %d×%d (%d nnz) with no values', nrows, ncols, nnz)
 
-        csr = CSR.from_coo(rows, cols, None, (100, 50))
-        assert csr.nrows == 100
-        assert csr.ncols == 50
-        assert csr.nnz == 1000
+    coords = st.integers(0, max(n - 1, 0))
+    coords = data.draw(nph.arrays(np.int32, nnz, elements=coords, unique=True))
+    rows = np.mod(coords, nrows, dtype=np.int32)
+    cols = np.floor_divide(coords, nrows, dtype=np.int32)
 
-        for i in range(100):
-            sp = csr.rowptrs[i]
-            ep = csr.rowptrs[i+1]
-            assert ep - sp == np.sum(rows == i)
-            points, = np.nonzero(rows == i)
-            po = np.argsort(cols[points])
-            points = points[po]
-            assert all(np.sort(csr.colinds[sp:ep]) == cols[points])
-            assert np.sum(csr.row(i)) == len(points)
+    csr = CSR.from_coo(rows, cols, None, (nrows, ncols))
+
+    rowinds = csr.rowinds()
+    assert csr.nrows == nrows
+    assert csr.ncols == ncols
+    assert csr.nnz == nnz
+
+    for i in range(nrows):
+        sp = csr.rowptrs[i]
+        ep = csr.rowptrs[i + 1]
+        assert ep - sp == np.sum(rows == i)
+        points, = np.nonzero(rows == i)
+        assert len(points) == ep - sp
+        po = np.argsort(cols[points])
+        points = points[po]
+        assert all(np.sort(csr.colinds[sp:ep]) == cols[points])
+        assert all(np.sort(csr.row_cs(i)) == cols[points])
+        assert all(rowinds[sp:ep] == i)
+
+        row = csr.row(i)
+        assert np.sum(row) == ep - sp
 
 
 def test_csr_to_sps():
