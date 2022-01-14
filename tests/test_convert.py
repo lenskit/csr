@@ -13,29 +13,6 @@ import hypothesis.extra.numpy as nph
 _log = logging.getLogger(__name__)
 
 
-@mark.parametrize('copy', [True, False])
-def test_csr_from_sps(copy):
-    "Test creating a CSR from a SciPy matrix"
-    # initialize sparse matrix
-    mat = np.random.randn(10, 5)
-    mat[mat <= 0] = 0
-    smat = sps.csr_matrix(mat)
-    # make sure it's sparse
-    assert smat.nnz == np.sum(mat > 0)
-
-    csr = CSR.from_scipy(smat, copy=copy)
-    assert csr.nnz == smat.nnz
-    assert csr.nrows == smat.shape[0]
-    assert csr.ncols == smat.shape[1]
-
-    assert all(csr.rowptrs == smat.indptr)
-    assert all(csr.colinds == smat.indices)
-    assert all(csr.values == smat.data)
-    assert isinstance(csr.rowptrs, np.ndarray)
-    assert isinstance(csr.colinds, np.ndarray)
-    assert isinstance(csr.values, np.ndarray)
-
-
 @given(sparse_matrices(format='csr'), st.booleans())
 def test_csr_from_sps_csr(smat, copy):
     "Test creating a CSR from a SciPy CSR matrix"
@@ -51,20 +28,6 @@ def test_csr_from_sps_csr(smat, copy):
     assert isinstance(csr.colinds, np.ndarray)
     if csr.nnz > 0:
         assert isinstance(csr.values, np.ndarray)
-
-
-def test_csr_is_numpy_compatible():
-    # initialize sparse matrix
-    mat = np.random.randn(10, 5)
-    mat[mat <= 0] = 0
-    smat = sps.csr_matrix(mat)
-    # make sure it's sparse
-    assert smat.nnz == np.sum(mat > 0)
-
-    csr = CSR.from_scipy(smat)
-
-    d2 = csr.values * 10
-    assert d2 == approx(smat.data * 10)
 
 
 def test_csr_from_coo_fixed():
@@ -156,28 +119,16 @@ def test_csr_from_coo_novals(data, nrows, ncols):
         assert np.sum(row) == ep - sp
 
 
-def test_csr_to_sps():
-    # initialize sparse matrix
-    mat = np.random.randn(10, 5)
-    mat[mat <= 0] = 0
-    # get COO
-    smat = sps.coo_matrix(mat)
-    # make sure it's sparse
-    assert smat.nnz == np.sum(mat > 0)
-
-    csr = CSR.from_coo(smat.row, smat.col, smat.data, shape=smat.shape)
-    assert csr.nnz == smat.nnz
-    assert csr.nrows == smat.shape[0]
-    assert csr.ncols == smat.shape[1]
-
-    smat2 = csr.to_scipy()
-    assert sps.isspmatrix(smat2)
-    assert sps.isspmatrix_csr(smat2)
+@given(csrs(values=True))
+def test_csr_to_sps(csr):
+    smat = csr.to_scipy()
+    assert sps.isspmatrix(smat)
+    assert sps.isspmatrix_csr(smat)
 
     for i in range(csr.nrows):
-        assert smat2.indptr[i] == csr.rowptrs[i]
-        assert smat2.indptr[i+1] == csr.rowptrs[i+1]
-        sp = smat2.indptr[i]
-        ep = smat2.indptr[i+1]
-        assert all(smat2.indices[sp:ep] == csr.colinds[sp:ep])
-        assert all(smat2.data[sp:ep] == csr.values[sp:ep])
+        assert smat.indptr[i] == csr.rowptrs[i]
+        assert smat.indptr[i + 1] == csr.rowptrs[i + 1]
+        sp = smat.indptr[i]
+        ep = smat.indptr[i + 1]
+        assert all(smat.indices[sp:ep] == csr.colinds[sp:ep])
+        assert all(smat.data[sp:ep] == csr.values[sp:ep])
