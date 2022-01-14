@@ -148,10 +148,15 @@ class CSR(_csr_base):
             shape(tuple): the array shape, or ``None`` to infer from row & column indices.
         """
         from .structure import from_coo
+
+        assert np.min(rows, initial=0) >= 0
+        assert np.min(cols, initial=0) >= 0
+
         if shape is not None:
             nrows, ncols = shape
-            assert np.max(rows, initial=0) < nrows
-            assert np.max(cols, initial=0) < ncols
+            # if rows/cols is 0, that's fine; max must be zero
+            assert np.max(rows, initial=0) < max(nrows, 1)
+            assert np.max(cols, initial=0) < max(ncols, 1)
         else:
             nrows = np.max(rows) + 1
             ncols = np.max(cols) + 1
