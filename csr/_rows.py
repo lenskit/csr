@@ -14,7 +14,7 @@ def extent(csr, row):
 
 def _array_vals(csr, row):
     "Get a row as a dense vector."
-    v = np.zeros(csr.ncols)
+    v = np.zeros(csr.ncols, csr.values.dtype)
     if csr.nnz == 0:
         return v
 
