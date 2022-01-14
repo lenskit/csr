@@ -113,7 +113,7 @@ def test_csr_set_values():
 
     csr = CSR.from_coo(rows, cols, vals)
 
-    v2 = np.random.randn(4)
+    v2 = 10 - vals
     csr.values = v2
 
     assert all(csr.values == v2)
@@ -126,7 +126,7 @@ def test_csr_set_values_oversize():
 
     csr = CSR.from_coo(rows, cols, vals)
 
-    v2 = np.random.randn(6)
+    v2 = np.arange(6, dtype=np.float_) + 10
     csr.values = v2
 
     assert csr.values is not None
@@ -140,7 +140,7 @@ def test_csr_set_values_undersize():
 
     csr = CSR.from_coo(rows, cols, vals)
 
-    v2 = np.random.randn(3)
+    v2 = np.arange(3, dtype=np.float_) + 5
 
     with raises(ValueError):
         csr.values = v2
