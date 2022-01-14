@@ -114,7 +114,7 @@ jobs:
         env:
           PIP_PREFER_BINARY: 'true'
         run: |
-          flit install --pth-file --deps dev
+          flit install --pth-file --deps develop
 
       - name: Run tests
         run: |
