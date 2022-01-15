@@ -49,7 +49,7 @@ def test_csr_from_coo(data, nrows, ncols, dtype):
     dtype = np.dtype(dtype)
     n = nrows * ncols
     nnz = data.draw(st.integers(0, int(n * 0.75)))
-    _log.info('testing %d×%d (%d nnz) of type %s', nrows, ncols, nnz, dtype)
+    _log.debug('testing %d×%d (%d nnz) of type %s', nrows, ncols, nnz, dtype)
 
     coords = st.integers(0, max(n - 1, 0))
     coords = data.draw(nph.arrays(np.int32, nnz, elements=coords, unique=True))
@@ -81,7 +81,6 @@ def test_csr_from_coo(data, nrows, ncols, dtype):
 
         row = np.zeros(ncols, dtype)
         row[cols[points]] = vals[points]
-        assert np.sum(csr.row(i)) == approx(np.sum(vals[points]))
         assert all(csr.row(i) == row)
 
 
