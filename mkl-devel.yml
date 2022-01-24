@@ -1,5 +1,6 @@
 dependencies:
-- mkl-devel=2020
-- mkl=2020
+- mkl-devel
+- mkl
+- tbb
 - libblas=*=*mkl
 - c-compiler
