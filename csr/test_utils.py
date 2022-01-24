@@ -18,7 +18,7 @@ def fractions(**kwargs):
 
 
 @st.composite
-def csrs(draw, nrows=None, ncols=None, nnz=None, values=None):
+def csrs(draw, nrows=None, ncols=None, nnz=None, values=None, dtype=np.float64):
     "Draw CSR matrices by generating COO data."
     if ncols is None:
         ncols = draw(st.integers(1, 80))
@@ -38,10 +38,19 @@ def csrs(draw, nrows=None, ncols=None, nnz=None, values=None):
     coords = draw(nph.arrays(np.int32, nnz, elements=st.integers(0, nrows*ncols - 1), unique=True))
     rows = np.mod(coords, nrows, dtype=np.int32)
     cols = np.floor_divide(coords, nrows, dtype=np.int32)
+
+    if isinstance(dtype, st.SearchStrategy):
+        dtype = draw(dtype)
+    elif isinstance(dtype, list):
+        dtype = draw(st.sampled_from(dtype))
+    dtype = np.dtype(dtype)
+
     if values is None:
         values = draw(st.booleans())
     if values:
-        vals = draw(nph.arrays(np.float64, nnz, elements=st.floats(-10, 10)))
+        elts = nph.from_dtype(dtype, min_value=-1.0e3, max_value=1.0e3,
+                              allow_infinity=False, allow_nan=False)
+        vals = draw(nph.arrays(dtype, nnz, elements=elts))
     else:
         vals = None
     return CSR.from_coo(rows, cols, vals, (nrows, ncols))
