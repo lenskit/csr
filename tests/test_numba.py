@@ -146,20 +146,20 @@ def _mult(A, B, transpose):
 @given(mm_pairs(), st.booleans())
 def test_numba_mult(pair, transpose):
     A, B = pair
-    C = A @ B
 
-    A = CSR.from_scipy(A)
-    B = CSR.from_scipy(B)
+    spA = A.to_scipy()
+    spB = B.to_scipy()
+    spC = spA @ spB
 
     if transpose:
         B = B.transpose()
 
     res = _mult(A, B, transpose)
 
-    cnr, cnc = C.shape
+    cnr, cnc = spC.shape
     assert res.nrows == cnr
     assert res.ncols == cnc
-    assert res.nnz == C.nnz
+    assert res.nnz == spC.nnz
 
 
 @njit

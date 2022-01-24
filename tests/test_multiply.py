@@ -13,29 +13,30 @@ _log = logging.getLogger(__name__)
 @given(mm_pairs())
 def test_multiply(kernel, pair):
     A, B = pair
-    csra = CSR.from_scipy(A)
-    csrb = CSR.from_scipy(B)
-    assume(csrb.nnz <= kernel.max_nnz)
+    assume(A.nnz <= kernel.max_nnz)
+    assume(B.nnz <= kernel.max_nnz)
+    spA = A.to_scipy()
+    spB = B.to_scipy()
 
-    prod = csra.multiply(csrb)
+    prod = A.multiply(B)
     assert isinstance(prod, CSR)
     _log.info('got %r', prod)
     _log.info('inner: %s', prod.R)
-    assert prod.nrows == csra.nrows
-    assert prod.ncols == csrb.ncols
+    assert prod.nrows == A.nrows
+    assert prod.ncols == B.ncols
 
-    AB = A @ B
-    abnr, abnc = AB.shape
+    sp_prod = spA @ spB
+    abnr, abnc = sp_prod.shape
     assert prod.nrows == abnr
     assert prod.ncols == abnc
 
-    assert prod.nnz == AB.nnz
+    assert prod.nnz == sp_prod.nnz
     if prod.nnz > 0:
         assert prod.values is not None
-    nrows = csra.nrows
+    nrows = A.nrows
 
     for i in range(nrows):
-        r_scipy = AB.getrow(i).toarray().ravel()
+        r_scipy = sp_prod.getrow(i).toarray().ravel()
         r_ours = prod.row(i)
 
         assert len(r_ours) == len(r_scipy)
@@ -46,29 +47,32 @@ def test_multiply(kernel, pair):
 @given(mm_pairs())
 def test_multiply_transpose(kernel, pair):
     A, B = pair
-    csra = CSR.from_scipy(A)
-    csrb = CSR.from_scipy(B.T)
-    assume(csrb.nnz <= kernel.max_nnz)
+    assume(A.nnz <= kernel.max_nnz)
+    assume(B.nnz <= kernel.max_nnz)
+    B = B.transpose()
 
-    prod = csra.multiply(csrb, transpose=True)
+    spA = A.to_scipy()
+    spB = B.to_scipy()
+
+    prod = A.multiply(B, transpose=True)
     assert isinstance(prod, CSR)
     _log.info('got %r', prod)
     _log.info('inner: %s', prod.R)
-    assert prod.nrows == csra.nrows
-    assert prod.ncols == csrb.nrows
+    assert prod.nrows == A.nrows
+    assert prod.ncols == B.nrows
 
-    AB = A @ B
-    abnr, abnc = AB.shape
+    sp_prod = spA @ spB.T
+    abnr, abnc = sp_prod.shape
     assert prod.nrows == abnr
     assert prod.ncols == abnc
 
-    assert prod.nnz == AB.nnz
+    assert prod.nnz == sp_prod.nnz
     if prod.nnz > 0:
         assert prod.values is not None
-    nrows = csra.nrows
+    nrows = A.nrows
 
     for i in range(nrows):
-        r_scipy = AB.getrow(i).toarray().ravel()
+        r_scipy = sp_prod.getrow(i).toarray().ravel()
         r_ours = prod.row(i)
 
         assert len(r_ours) == len(r_scipy)

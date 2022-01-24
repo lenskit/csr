@@ -26,7 +26,7 @@ def finite_arrays(draw, shape, dtype=np.float64(), min_value=1.0e-6, max_value=1
 
 
 @st.composite
-def csrs(draw, nrows=None, ncols=None, nnz=None, values=None, dtype=np.float64):
+def csrs(draw, nrows=None, ncols=None, nnz=None, values=None, dtype=np.float64()):
     "Draw CSR matrices by generating COO data."
     if ncols is None:
         ncols = draw(st.integers(1, 80))
@@ -72,22 +72,17 @@ def sparse_matrices(draw, max_shape=(1000, 1000), density=fractions(), format='c
 
 
 @st.composite
-def mm_pairs(draw, max_shape=(100, 100, 100), as_csr=False):
+def mm_pairs(draw, max_shape=(100, 100, 100), dtype=np.float64()):
     "Draw multipliable pairs of matrices"
     mr, mm, mc = max_shape
     rows = draw(st.integers(1, mr))
     mids = draw(st.integers(1, mm))
     cols = draw(st.integers(1, mc))
-    dA = draw(st.floats(0.001, 0.9))
-    dB = draw(st.floats(0.001, 0.9))
 
-    A = sps.random(rows, mids, dA, format='csr')
-    B = sps.random(mids, cols, dB, format='csr')
+    A = draw(csrs(rows, mids, values=True, dtype=dtype))
+    B = draw(csrs(mids, cols, values=True, dtype=dtype))
 
-    if as_csr:
-        return CSR.from_scipy(A), CSR.from_scipy(B)
-    else:
-        return A, B
+    return A, B
 
 
 def matrices(max_shape=(100, 100), dtype='f8'):

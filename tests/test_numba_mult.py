@@ -16,7 +16,7 @@ import hypothesis.extra.numpy as nph
 
 
 @settings(deadline=None)
-@given(mm_pairs(max_shape=(50, 1000, 50), as_csr=True))
+@given(mm_pairs(max_shape=(50, 1000, 50)))
 def test_symb(pair):
     A, B = pair
 
