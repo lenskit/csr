@@ -18,6 +18,14 @@ def fractions(**kwargs):
 
 
 @st.composite
+def finite_arrays(draw, shape, dtype=np.float64(), min_value=1.0e-6, max_value=1.0e6):
+    dtype = np.dtype(dtype)
+    elts = nph.from_dtype(dtype, min_value=min_value, max_value=max_value,
+                          allow_infinity=False, allow_nan=False)
+    return draw(nph.arrays(dtype, shape, elements=elts))
+
+
+@st.composite
 def csrs(draw, nrows=None, ncols=None, nnz=None, values=None, dtype=np.float64):
     "Draw CSR matrices by generating COO data."
     if ncols is None:
@@ -48,9 +56,7 @@ def csrs(draw, nrows=None, ncols=None, nnz=None, values=None, dtype=np.float64):
     if values is None:
         values = draw(st.booleans())
     if values:
-        elts = nph.from_dtype(dtype, min_value=-1.0e3, max_value=1.0e3,
-                              allow_infinity=False, allow_nan=False)
-        vals = draw(nph.arrays(dtype, nnz, elements=elts))
+        vals = draw(finite_arrays(nnz, dtype=dtype))
     else:
         vals = None
     return CSR.from_coo(rows, cols, vals, (nrows, ncols))

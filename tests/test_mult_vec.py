@@ -2,7 +2,7 @@ import logging
 import numpy as np
 
 from csr import CSR
-from csr.test_utils import sparse_matrices
+from csr.test_utils import sparse_matrices, csrs, finite_arrays
 
 from pytest import approx
 from hypothesis import given, settings
@@ -13,14 +13,11 @@ _log = logging.getLogger(__name__)
 
 
 @settings(deadline=None)
-@given(st.data())
-def test_mult_vec(kernel, data):
-    mat = data.draw(sparse_matrices((100, 100)))
-    md = mat.toarray()
-    csra = CSR.from_scipy(mat)
+@given(st.data(), csrs(values=True))
+def test_mult_vec(kernel, data, csra):
+    md = csra.to_scipy().toarray()
     # TODO make the test work with larger values
-    vals = st.floats(-100, 100)
-    v = data.draw(nph.arrays(np.float64, csra.ncols, elements=vals))
+    v = data.draw(finite_arrays(csra.ncols))
 
     prod = csra.mult_vec(v)
     assert prod.shape == (csra.nrows,)
@@ -31,16 +28,11 @@ def test_mult_vec(kernel, data):
 
 
 @settings(deadline=None)
-@given(st.data())
-def test_mult_vec_novalue(kernel, data):
-    mat = data.draw(sparse_matrices())
-    csra = CSR.from_scipy(mat, True)
+@given(st.data(), csrs(values=False))
+def test_mult_vec_novalue(kernel, data, csra):
+    mat = csra.to_scipy()
 
-    csra.drop_values()
-    mat.data[:] = 1.0
-
-    vals = st.floats(-100, 100)
-    v = data.draw(nph.arrays(np.float64, csra.ncols, elements=vals))
+    v = data.draw(finite_arrays(csra.ncols))
 
     prod = csra.mult_vec(v)
     assert prod.shape == (csra.nrows,)
