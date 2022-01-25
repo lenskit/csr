@@ -26,7 +26,8 @@ def finite_arrays(draw, shape, dtype=np.float64(), min_value=1.0e-6, max_value=1
 
 
 @st.composite
-def csrs(draw, nrows=None, ncols=None, nnz=None, values=None, dtype=np.float64()):
+def csrs(draw, nrows=None, ncols=None, nnz=None, max_nnz=None, max_density=0.8,
+         values=None, dtype=np.float64()):
     "Draw CSR matrices by generating COO data."
     if ncols is None:
         ncols = draw(st.integers(1, 80))
@@ -39,7 +40,10 @@ def csrs(draw, nrows=None, ncols=None, nnz=None, values=None, dtype=np.float64()
         nrows = draw(nrows)
 
     if nnz is None:
-        nnz = draw(st.integers(0, int(np.ceil(nrows * ncols * 0.5))))
+        nnz_ub = int(np.ceil(nrows * ncols * max_density))
+        if max_nnz and nnz_ub > max_nnz:
+            nnz_ub = max_nnz
+        nnz = draw(st.integers(0, nnz_ub))
     elif not isinstance(nnz, int):
         nnz = draw(nnz)
 
@@ -72,15 +76,15 @@ def sparse_matrices(draw, max_shape=(1000, 1000), density=fractions(), format='c
 
 
 @st.composite
-def mm_pairs(draw, max_shape=(100, 100, 100), dtype=np.float64()):
+def mm_pairs(draw, max_shape=(100, 100, 100), dtype=np.float64(), **kwargs):
     "Draw multipliable pairs of matrices"
     mr, mm, mc = max_shape
     rows = draw(st.integers(1, mr))
     mids = draw(st.integers(1, mm))
     cols = draw(st.integers(1, mc))
 
-    A = draw(csrs(rows, mids, values=True, dtype=dtype))
-    B = draw(csrs(mids, cols, values=True, dtype=dtype))
+    A = draw(csrs(rows, mids, values=True, dtype=dtype, **kwargs))
+    B = draw(csrs(mids, cols, values=True, dtype=dtype, **kwargs))
 
     return A, B
 

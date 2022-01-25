@@ -5,16 +5,15 @@ from csr.test_utils import mm_pairs
 
 from pytest import approx
 from hypothesis import given, settings, assume
+from hypothesis import strategies as st
 
 _log = logging.getLogger(__name__)
 
 
 @settings(deadline=None)
-@given(mm_pairs())
-def test_multiply(kernel, pair):
-    A, B = pair
-    assume(A.nnz <= kernel.max_nnz)
-    assume(B.nnz <= kernel.max_nnz)
+@given(st.data())
+def test_multiply(kernel, data):
+    A, B = data.draw(mm_pairs(max_nnz=kernel.max_nnz))
     spA = A.to_scipy()
     spB = B.to_scipy()
 
@@ -44,11 +43,9 @@ def test_multiply(kernel, pair):
 
 
 @settings(deadline=None)
-@given(mm_pairs())
-def test_multiply_transpose(kernel, pair):
-    A, B = pair
-    assume(A.nnz <= kernel.max_nnz)
-    assume(B.nnz <= kernel.max_nnz)
+@given(st.data())
+def test_multiply_transpose(kernel, data):
+    A, B = data.draw(mm_pairs(max_nnz=kernel.max_nnz))
     B = B.transpose()
 
     spA = A.to_scipy()
