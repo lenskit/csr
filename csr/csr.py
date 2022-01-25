@@ -662,6 +662,7 @@ class CSR(_csr_base):
         repr += '  rowptrs={}\n'.format(self.rowptrs)
         repr += '  colinds={}\n'.format(self.colinds)
         repr += '  values={}\n'.format(self.values)
+        repr += '  dtype={}\n'.format(self.values.dtype if self.values is not None else None)
         repr += '}>'
         return repr
 
