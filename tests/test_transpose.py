@@ -2,12 +2,10 @@ import numpy as np
 import scipy.sparse as sps
 
 from csr import CSR
-from csr.test_utils import csrs, csr_slow, sparse_matrices
+from csr.test_utils import csrs
 
-from pytest import mark, approx, raises
-from hypothesis import given, assume, settings, HealthCheck
-import hypothesis.strategies as st
-import hypothesis.extra.numpy as nph
+from pytest import approx
+from hypothesis import given
 
 
 def test_csr_transpose():
@@ -69,17 +67,15 @@ def test_csr_transpose_erow():
     assert np.all(s2.toarray() == smat.toarray())
 
 
-@given(sparse_matrices())
-def test_csr_transpose_many(smat):
-    nrows, ncols = smat.shape
-    csr = CSR.from_scipy(smat)
+@given(csrs(values=True))
+def test_csr_transpose_many(csr):
     csrt = csr.transpose()
-    assert csrt.nrows == ncols
-    assert csrt.ncols == nrows
+    assert csrt.nrows == csr.ncols
+    assert csrt.ncols == csr.nrows
     assert csrt.nnz == csr.nnz
 
     s2 = csrt.to_scipy()
-    smat = smat.T.tocsr()
+    smat = csr.to_scipy().T.tocsr()
     assert all(smat.indptr == csrt.rowptrs)
 
     assert np.all(s2.toarray() == smat.toarray())
