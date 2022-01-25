@@ -23,9 +23,10 @@ jobs:
         - windows
         - ubuntu
         python:
-        - 3.7
-        - 3.8
-        - 3.9
+        - "3.7"
+        - "3.8"
+        - "3.9"
+        - "3.10"
 
     steps:
     - uses: actions/checkout@v2
@@ -59,7 +60,7 @@ jobs:
 
     - name: 🛠 Compile MKL helper
       run: |
-        python build_mkl.py
+        invoke build-mkl
 
     - name: Run tests
       run: |
@@ -74,8 +75,14 @@ jobs:
     - name: Aggregate coverage data
       run: coverage xml
 
-    - name: Upload coverage
-      uses: codecov/codecov-action@v1
+    - name: Upload logs
+      uses: actions/upload-artifact@v2
+      with:
+        name: log-conda-${{matrix.platform}}-py${{matrix.python}}
+        path: |
+          test*.log
+          coverage.xml
+          emissions.csv
 
   test-vanilla:
     name: Test w/ Vanilla Python ${{matrix.python}} on ${{matrix.platform}}
@@ -123,11 +130,17 @@ jobs:
       - name: Aggreagate Coverage Data
         run: coverage xml
 
-      - name: Upload coverage
-        uses: codecov/codecov-action@v1
+      - name: Upload logs
+        uses: actions/upload-artifact@v2
+        with:
+          name: log-vanilla-${{matrix.platform}}-py${{matrix.python}}
+          path: |
+            test*.log
+            coverage.xml
+            emissions.csv
 
   sdist:
-    name: Build Source Packages
+    name: Process Build & Test Results
     runs-on: ubuntu-latest
     needs: [test-conda, test-vanilla]
 
@@ -147,14 +160,33 @@ jobs:
     - name: Install Python deps
       run: pip install -U flit
 
+    - name: Download test results
+      uses: actions/download-artifact@v2
+      with:
+        path: test-logs
+
+    - name: List log files
+      run: ls -lR test-logs
+
+    - name: Upload test coverage
+      uses: codecov/codecov-action@v2
+      with:
+        directory: test-logs/
+
     - name: Build distribution
       run: flit build
 
-    - name: Save archive
-      uses: actions/upload-artifact@v1
+    - name: Save distribution archive
+      uses: actions/upload-artifact@v2
       with:
         name: pypi-pkgs
         path: dist
+
+    - name: Upload all test data
+      uses: actions/upload-artifact@v2
+      with:
+        name: test-outputs
+        path: test-logs
 
     - name: List dist dir
       run: ls -R dist

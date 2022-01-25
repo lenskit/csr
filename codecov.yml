@@ -1,4 +1,5 @@
 ignore:
 - build*.py
+- tasks.py
 - build-tools/*
 - lkbuild/*
