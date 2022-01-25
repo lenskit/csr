@@ -118,6 +118,22 @@ def test_csr_from_coo_novals(data, nrows, ncols):
         assert np.sum(row) == ep - sp
 
 
+@given(st.data(), st.sampled_from(['csr', 'coo', 'csc']))
+def test_sps_to_csr(data, format):
+    mat = data.draw(sparse_matrices(format=format))
+    nr, nc = mat.shape
+    sp_csr: sps.csr_matrix = mat.tocsr()
+
+    csr = CSR.from_scipy(mat)
+
+    assert csr.ncols == nc
+    assert csr.nrows == nr
+    assert csr.nnz == mat.nnz
+    assert np.all(csr.rowptrs == sp_csr.indptr)
+    assert np.all(csr.colinds == sp_csr.indices)
+    assert np.all(csr.values == sp_csr.data)
+
+
 @given(csrs(values=True))
 def test_csr_to_sps(csr):
     smat = csr.to_scipy()
