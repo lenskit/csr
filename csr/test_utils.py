@@ -26,7 +26,7 @@ def finite_arrays(draw, shape, dtype=np.float64(), min_value=1.0e-6, max_value=1
 
 
 @st.composite
-def csrs(draw, nrows=None, ncols=None, nnz=None, max_nnz=None, max_density=0.8,
+def csrs(draw, nrows=None, ncols=None, nnz=None, max_nnz=None, max_density=0.5,
          values=None, dtype=np.float64()):
     "Draw CSR matrices by generating COO data."
     if ncols is None:

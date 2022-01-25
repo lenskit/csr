@@ -4,7 +4,7 @@ from csr import CSR
 from csr.test_utils import mm_pairs
 
 from pytest import approx
-from hypothesis import given, settings, assume
+from hypothesis import given, settings
 from hypothesis import strategies as st
 
 _log = logging.getLogger(__name__)
@@ -20,7 +20,6 @@ def test_multiply(kernel, data):
     prod = A.multiply(B)
     assert isinstance(prod, CSR)
     _log.info('got %r', prod)
-    _log.info('inner: %s', prod.R)
     assert prod.nrows == A.nrows
     assert prod.ncols == B.ncols
 
@@ -54,7 +53,6 @@ def test_multiply_transpose(kernel, data):
     prod = A.multiply(B, transpose=True)
     assert isinstance(prod, CSR)
     _log.info('got %r', prod)
-    _log.info('inner: %s', prod.R)
     assert prod.nrows == A.nrows
     assert prod.ncols == B.nrows
 
