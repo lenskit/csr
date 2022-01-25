@@ -1,7 +1,7 @@
 import logging
 
 from csr import CSR
-from csr.test_utils import mm_pairs
+from csr.test_utils import mm_pairs, csr_slow
 
 from pytest import approx
 from hypothesis import given, settings
@@ -10,7 +10,7 @@ from hypothesis import strategies as st
 _log = logging.getLogger(__name__)
 
 
-@settings(deadline=None)
+@csr_slow()
 @given(st.data())
 def test_multiply(kernel, data):
     A, B = data.draw(mm_pairs(max_nnz=kernel.max_nnz))
@@ -41,7 +41,7 @@ def test_multiply(kernel, data):
         assert r_ours == approx(r_scipy)
 
 
-@settings(deadline=None)
+@csr_slow()
 @given(st.data())
 def test_multiply_transpose(kernel, data):
     A, B = data.draw(mm_pairs(max_nnz=kernel.max_nnz))
