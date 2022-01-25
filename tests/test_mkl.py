@@ -9,6 +9,7 @@ import numpy as np
 
 from csr import CSR
 from csr.test_utils import csrs, has_memory
+from csr.kernels import use_kernel
 
 from pytest import skip, mark
 from hypothesis import given
@@ -74,19 +75,19 @@ def fill_rows(values, colinds, nrows, ncols, dense):
 
 def test_mult_vec_lim():
     "Test matrix-vector multiply with limited kernel capacity"
-    with mkl_lim():
+    with mkl_lim(), use_kernel('mkl'):
         tmv.test_mult_vec(mkl)
 
 
 def test_multiply_lim():
     "Test matrix-matrix multiply with limited kernel capacity"
-    with mkl_lim():
+    with mkl_lim(), use_kernel('mkl'):
         tmm.test_multiply(mkl)
 
 
 def test_multiply_transpose_lim():
-    "Select matrix-matrix transpose multiply with limited kernel capacity"
-    with mkl_lim():
+    "Test matrix-matrix transpose multiply with limited kernel capacity"
+    with mkl_lim(), use_kernel('mkl'):
         tmm.test_multiply_transpose(mkl)
 
 

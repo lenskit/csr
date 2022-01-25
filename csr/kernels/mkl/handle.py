@@ -10,6 +10,7 @@ from numba.experimental import structref
 
 from csr import CSR
 from ._api import *  # noqa: F403
+import csr.kernels.mkl as _hpkg
 from csr.constructors import create_empty
 
 __all__ = [
@@ -58,6 +59,9 @@ _make_handle = njit(_make_handle_impl)
 
 
 def to_handle(csr: CSR) -> mkl_h:
+    if csr.nnz > _hpkg.max_nnz:
+        raise ValueError('CSR size {} exceeds max nnz {}'.format(csr.nnz, _hpkg.max_nnz))
+
     if csr.nnz == 0:
         # empty matrices don't really work
         return mkl_h(0, csr.nrows, csr.ncols, None)
