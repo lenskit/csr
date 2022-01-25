@@ -1,13 +1,10 @@
 import logging
-import numpy as np
 
-from csr import CSR
-from csr.test_utils import sparse_matrices, csrs, finite_arrays
+from csr.test_utils import csrs, finite_arrays
 
 from pytest import approx
 from hypothesis import given, settings
 import hypothesis.strategies as st
-import hypothesis.extra.numpy as nph
 
 _log = logging.getLogger(__name__)
 

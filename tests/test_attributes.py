@@ -2,12 +2,11 @@ import numpy as np
 import scipy.sparse as sps
 
 from csr import CSR
-from csr.test_utils import csr_slow, csrs, matrices, sparse_matrices
+from csr.test_utils import csr_slow, csrs, matrices
 
 from pytest import raises
-from hypothesis import given, assume, settings, HealthCheck
+from hypothesis import given, assume
 import hypothesis.strategies as st
-import hypothesis.extra.numpy as nph
 
 
 def test_csr_rowinds():

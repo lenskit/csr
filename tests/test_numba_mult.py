@@ -3,19 +3,14 @@ Internal tests for Numba kernel multiplication code.
 """
 
 import numpy as np
-import scipy.sparse as sps
 
-from csr import CSR
-from csr.test_utils import csrs, csr_slow, sparse_matrices, mm_pairs
+from csr.test_utils import csr_slow, mm_pairs
 from csr.kernels.numba.multiply import _sym_mm
 
-from pytest import mark, approx, raises
-from hypothesis import given, assume, settings, HealthCheck
-import hypothesis.strategies as st
-import hypothesis.extra.numpy as nph
+from hypothesis import given
 
 
-@settings(deadline=None)
+@csr_slow()
 @given(mm_pairs(max_shape=(50, 1000, 50)))
 def test_symb(pair):
     A, B = pair

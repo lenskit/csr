@@ -3,10 +3,10 @@ import numpy as np
 import scipy.sparse as sps
 
 from csr import CSR
-from csr.test_utils import csrs, csr_slow, sparse_matrices
+from csr.test_utils import csrs, csr_slow
 
-from pytest import mark, approx, raises
-from hypothesis import given, assume, settings, HealthCheck
+from pytest import approx
+from hypothesis import given, assume
 import hypothesis.strategies as st
 import hypothesis.extra.numpy as nph
 
@@ -29,8 +29,8 @@ def test_subset_rows(data):
     assert m2.nrows == end - beg
 
     for i in range(m2.nrows):
-        assert all(m2.row_cs(i) == csr.row_cs(beg+i))
-        assert all(m2.row_vs(i) == csr.row_vs(beg+i))
+        assert all(m2.row_cs(i) == csr.row_cs(beg + i))
+        assert all(m2.row_vs(i) == csr.row_vs(beg + i))
 
 
 @csr_slow()

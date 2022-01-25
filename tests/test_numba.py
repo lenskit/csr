@@ -1,16 +1,12 @@
 from textwrap import dedent
 from _pytest.python_api import approx
 import numpy as np
-from numpy.testing._private.utils import assert_equal
-import scipy.sparse as sps
 
-from csr import CSR
-from csr.test_utils import csrs, matrices, mm_pairs, sparse_matrices
+from csr.test_utils import csrs, mm_pairs
 
 from numba import njit
 
-from pytest import raises
-from hypothesis import given, assume, settings, HealthCheck
+from hypothesis import given
 import hypothesis.strategies as st
 import hypothesis.extra.numpy as nph
 
