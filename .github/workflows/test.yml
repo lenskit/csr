@@ -59,7 +59,7 @@ jobs:
 
     - name: 🛠 Compile MKL helper
       run: |
-        python build_mkl.py
+        invoke build-mkl
 
     - name: Run tests
       run: |
