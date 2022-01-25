@@ -2,7 +2,7 @@ import numpy as np
 import scipy.sparse as sps
 
 from csr import CSR
-from csr.test_utils import csrs, matrices, sparse_matrices
+from csr.test_utils import csr_slow, csrs, matrices, sparse_matrices
 
 from pytest import raises
 from hypothesis import given, assume, settings, HealthCheck
@@ -42,14 +42,13 @@ def test_csr_row_extent_fixed():
     assert csr.row_extent(3) == (3, 4)
 
 
-@given(sparse_matrices())
-def test_csr_row_extent(smat):
-    csr = CSR.from_scipy(smat)
-
+@csr_slow()
+@given(csrs(st.integers(1, 100), st.integers(1, 100)))
+def test_csr_row_extent(csr):
     for i in range(csr.nrows):
         sp, ep = csr.row_extent(i)
         assert sp == csr.rowptrs[i]
-        assert ep == csr.rowptrs[i+1]
+        assert ep == csr.rowptrs[i + 1]
 
 
 def test_csr_row_fixed():
@@ -64,9 +63,10 @@ def test_csr_row_fixed():
     assert all(csr.row(3) == np.array([0, 4, 0], dtype=np.float_))
 
 
-@given(sparse_matrices())
-def test_csr_row(smat):
-    csr = CSR.from_scipy(smat)
+@csr_slow()
+@given(csrs(st.integers(1, 100), st.integers(1, 100)))
+def test_csr_row(csr):
+    smat = csr.to_scipy()
 
     for i in range(csr.nrows):
         other = smat[i, :].toarray().ravel()
@@ -94,12 +94,14 @@ def test_csr_sparse_row():
     assert all(csr.row_vs(3) == np.array([3], dtype=np.float_))
 
 
-@given(csrs())
+@csr_slow()
+@given(csrs(st.integers(1, 100), st.integers(1, 100), values=True))
 def test_drop_values(csr):
     csr.drop_values()
     assert csr.values is None
 
 
+@csr_slow()
 @given(csrs(), st.floats(allow_infinity=False, allow_nan=False))
 def test_fill_values(csr, x):
     csr.fill_values(x)
@@ -162,6 +164,7 @@ def test_csr_set_values_none():
     assert all(csr.row(3) == [0, 1, 0])
 
 
+@csr_slow()
 @given(matrices())
 def test_csr_row_nnzs(mat):
     nrows, ncols = mat.shape
@@ -180,10 +183,10 @@ def test_csr_row_nnzs(mat):
         assert nnzs[i] == np.sum(row > 0)
 
 
-@given(sparse_matrices())
-def test_copy(mat):
+@csr_slow()
+@given(csrs(st.integers(1, 100), st.integers(1, 100)))
+def test_copy(csr):
     "Test copying a CSR"
-    csr = CSR.from_scipy(mat)
     c2 = csr.copy()
 
     assert c2.nrows == csr.nrows
@@ -193,14 +196,17 @@ def test_copy(mat):
     assert all(c2.rowptrs == csr.rowptrs)
     assert c2.colinds is not csr.colinds
     assert all(c2.colinds == csr.colinds)
-    assert c2.values is not csr.values
-    assert all(c2.values == csr.values)
+    if csr.values is not None:
+        assert c2.values is not csr.values
+        assert all(c2.values == csr.values)
+    else:
+        assert c2.values is None
 
 
-@given(sparse_matrices())
-def test_copy_share(mat):
+@csr_slow()
+@given(csrs(st.integers(1, 100), st.integers(1, 100)))
+def test_copy_share(csr):
     "Test copying a CSR and sharing structure"
-    csr = CSR.from_scipy(mat)
     c2 = csr.copy(copy_structure=False)
 
     assert c2.nrows == csr.nrows
@@ -208,14 +214,17 @@ def test_copy_share(mat):
     assert c2.nnz == csr.nnz
     assert c2.rowptrs is csr.rowptrs
     assert c2.colinds is csr.colinds
-    assert c2.values is not csr.values
-    assert all(c2.values == csr.values)
+    if csr.values is not None:
+        assert c2.values is not csr.values
+        assert all(c2.values == csr.values)
+    else:
+        assert c2.values is None
 
 
-@given(sparse_matrices())
-def test_copy_structure_only(mat):
+@csr_slow()
+@given(csrs(st.integers(1, 100), st.integers(1, 100)))
+def test_copy_structure_only(csr):
     "Test copying only the structure of a CSV."
-    csr = CSR.from_scipy(mat)
     c2 = csr.copy(False)
 
     assert c2.nrows == csr.nrows
@@ -228,6 +237,7 @@ def test_copy_structure_only(mat):
     assert c2.values is None
 
 
+@csr_slow()
 @given(csrs(values=False), st.booleans())
 def test_copy_csrnv(csr, inc):
     "Test copying a CSR with no values."
