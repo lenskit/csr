@@ -47,7 +47,8 @@ def csrs(draw, nrows=None, ncols=None, nnz=None, max_nnz=None, max_density=0.5,
     elif not isinstance(nnz, int):
         nnz = draw(nnz)
 
-    coords = draw(nph.arrays(np.int32, nnz, elements=st.integers(0, nrows*ncols - 1), unique=True))
+    coo_elts = st.integers(0, nrows * ncols - 1)
+    coords = draw(nph.arrays(np.int32, nnz, elements=coo_elts, unique=True))
     rows = np.mod(coords, nrows, dtype=np.int32)
     cols = np.floor_divide(coords, nrows, dtype=np.int32)
 
