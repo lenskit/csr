@@ -18,7 +18,7 @@ def fractions(**kwargs):
 
 
 @st.composite
-def finite_arrays(draw, shape, dtype=np.float64(), min_value=1.0e-6, max_value=1.0e6):
+def finite_arrays(draw, shape, dtype=np.float64(), min_value=-1.0e3, max_value=1.0e3):
     dtype = np.dtype(dtype)
     elts = nph.from_dtype(dtype, min_value=min_value, max_value=max_value,
                           allow_infinity=False, allow_nan=False)

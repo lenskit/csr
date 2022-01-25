@@ -88,10 +88,10 @@ def test_kernel_sort_rows(kernel, csr):
 
 
 @csr_slow()
-@given(sparse_matrices())
-def test_mean_center(spm):
+@given(csrs(values=True, dtype=['f8']))
+def test_mean_center(csr):
     # assume(spm.nnz >= 10)
-    csr = CSR.from_scipy(spm)
+    backup = csr.copy()
 
     m2 = csr.normalize_rows('center')
     assert len(m2) == csr.nrows
@@ -99,35 +99,53 @@ def test_mean_center(spm):
 
     for i in range(csr.nrows):
         vs = csr.row_vs(i)
-        spr = spm[i, :].toarray()
-        if rnnz[i] > 0:
-            assert m2[i] == approx(np.sum(spr) / rnnz[i])
-            assert np.mean(vs) == approx(0.0)
-            assert vs + m2[i] == approx(spr[0, csr.row_cs(i)])
+        b_vs = backup.row_vs(i)
+        b_row = backup.row(i)
+
+        try:
+            if rnnz[i] > 0:
+                assert m2[i] == approx(np.mean(b_vs))
+                assert m2[i] == approx(np.sum(b_row) / rnnz[i])
+                assert np.mean(vs) == approx(0.0)
+                assert vs + m2[i] == approx(b_row[csr.row_cs(i)])
+        except Exception as e:
+            _log.error('failure on row %d: %s', i, e)
+            _log.info('row original sum: %e', np.sum(b_vs))
+            _log.info('row original ptp: %e', np.ptp(b_vs))
+            _log.info('row original range: %e, %e', np.min(b_vs), np.max(b_vs))
+            _log.info('row new sum: %e', np.sum(vs))
+            _log.info('row normed mean: %e', m2[i])
+            raise e
 
 
 @csr_slow()
-@given(sparse_matrices())
-def test_unit_norm(spm):
+@given(csrs(values=True, dtype=['f8']))
+def test_unit_norm(csr: CSR):
     # assume(spm.nnz >= 10)
-    csr = CSR.from_scipy(spm)
+    backup = csr.copy()
 
     m2 = csr.normalize_rows('unit')
     assert len(m2) == csr.nrows
 
     for i in range(csr.nrows):
         vs = csr.row_vs(i)
+        bvs = backup.row_vs(i)
         if len(vs) > 0:
-            assert np.linalg.norm(vs) == approx(1.0)
-            assert vs * m2[i] == approx(spm.getrow(i).toarray()[0, csr.row_cs(i)])
+            assert m2[i] == approx(np.linalg.norm(bvs))
+            if m2[i] > 0:
+                assert np.linalg.norm(vs) == approx(1.0)
+                assert vs * m2[i] == approx(backup.row_vs(i))
+            else:
+                assert all(np.isnan(vs))
+        else:
+            assert m2[i] == 0.0
 
 
 @csr_slow()
-@given(sparse_matrices())
-def test_filter(mat):
-    assume(mat.nnz > 0)
-    assume(not np.all(mat.data <= 0))  # we have to have at least one to retain
-    csr = CSR.from_scipy(mat)
+@given(csrs(values=True, dtype=['f8']))
+def test_filter(csr):
+    assume(csr.nnz > 0)
+    assume(not np.all(csr.values <= 0))  # we have to have at least one to retain
     csrf = csr.filter_nnzs(csr.values > 0)
     assert all(csrf.values > 0)
     assert csrf.nnz <= csr.nnz
@@ -143,11 +161,10 @@ def test_filter(mat):
     assert df == approx(d1)
 
 
-# @csr_slow()
-@given(sparse_matrices())
-def test_shard(mat):
+@csr_slow()
+@given(csrs(st.integers(10, 100), st.integers(10, 100), max_density=0.99, values=True))
+def test_shard(csr):
     SHARD_SIZE = 1000
-    csr = CSR.from_scipy(mat)
 
     shards = csr._shard_rows(SHARD_SIZE)
     # we have the whole matrix
