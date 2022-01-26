@@ -1,5 +1,5 @@
 """
-Internal tests for Numba kernel multiplication code.
+Internal tests for Numba kernel multiplication.
 """
 
 import numpy as np

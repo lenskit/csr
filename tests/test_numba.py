@@ -1,3 +1,6 @@
+"""
+Tests to make sure the Numba interface for CSR is usable.
+"""
 from textwrap import dedent
 from _pytest.python_api import approx
 import numpy as np
