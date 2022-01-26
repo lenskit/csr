@@ -93,9 +93,11 @@ def test_mean_center(csr):
     # assume(spm.nnz >= 10)
     backup = csr.copy()
     if csr.values.dtype == np.dtype('f4'):
-        mean_tol = 1.0e-3
+        rel_tol = 1.0e-5
+        abs_tol = 1.0e-4
     else:
-        mean_tol = 1.0e-10
+        rel_tol = 1.0e-6
+        abs_tol = 1.0e-10
 
     m2 = csr.normalize_rows('center')
     assert len(m2) == csr.nrows
@@ -109,10 +111,10 @@ def test_mean_center(csr):
 
         try:
             if rnnz[i] > 0:
-                assert m2[i] == approx(np.mean(b_vs))
-                assert m2[i] == approx(np.sum(b_row) / rnnz[i])
-                assert np.mean(vs) == approx(0.0, abs=mean_tol)
-                assert vs + m2[i] == approx(b_row[csr.row_cs(i)], abs=mean_tol)
+                assert m2[i] == approx(np.mean(b_vs), rel=rel_tol, abs=abs_tol)
+                assert m2[i] == approx(np.sum(b_row) / rnnz[i], rel=rel_tol, abs=abs_tol)
+                assert np.mean(vs) == approx(0.0, rel=rel_tol, abs=abs_tol)
+                assert vs + m2[i] == approx(b_row[csr.row_cs(i)], rel=rel_tol, abs=abs_tol)
         except Exception as e:
             _log.error('failure on row %d: %s', i, e)
             _log.info('row original sum: %e', np.sum(b_vs))
