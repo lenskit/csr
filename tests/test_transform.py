@@ -99,6 +99,7 @@ def test_mean_center(csr):
 
     m2 = csr.normalize_rows('center')
     assert len(m2) == csr.nrows
+    assert m2.dtype == csr.values.dtype
     rnnz = csr.row_nnzs()
 
     for i in range(csr.nrows):
@@ -111,7 +112,7 @@ def test_mean_center(csr):
                 assert m2[i] == approx(np.mean(b_vs))
                 assert m2[i] == approx(np.sum(b_row) / rnnz[i])
                 assert np.mean(vs) == approx(0.0, abs=mean_tol)
-                assert vs + m2[i] == approx(b_row[csr.row_cs(i)])
+                assert vs + m2[i] == approx(b_row[csr.row_cs(i)], abs=mean_tol)
         except Exception as e:
             _log.error('failure on row %d: %s', i, e)
             _log.info('row original sum: %e', np.sum(b_vs))
@@ -130,6 +131,7 @@ def test_unit_norm(csr: CSR):
 
     m2 = csr.normalize_rows('unit')
     assert len(m2) == csr.nrows
+    assert m2.dtype == csr.values.dtype
 
     for i in range(csr.nrows):
         vs = csr.row_vs(i)
