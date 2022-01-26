@@ -88,10 +88,14 @@ def test_kernel_sort_rows(kernel, csr):
 
 
 @csr_slow()
-@given(csrs(values=True, dtype=['f8']))
+@given(csrs(values=True))
 def test_mean_center(csr):
     # assume(spm.nnz >= 10)
     backup = csr.copy()
+    if csr.values.dtype == np.dtype('f4'):
+        mean_tol = 1.0e-3
+    else:
+        mean_tol = 1.0e-10
 
     m2 = csr.normalize_rows('center')
     assert len(m2) == csr.nrows
@@ -106,7 +110,7 @@ def test_mean_center(csr):
             if rnnz[i] > 0:
                 assert m2[i] == approx(np.mean(b_vs))
                 assert m2[i] == approx(np.sum(b_row) / rnnz[i])
-                assert np.mean(vs) == approx(0.0)
+                assert np.mean(vs) == approx(0.0, abs=mean_tol)
                 assert vs + m2[i] == approx(b_row[csr.row_cs(i)])
         except Exception as e:
             _log.error('failure on row %d: %s', i, e)
@@ -119,7 +123,7 @@ def test_mean_center(csr):
 
 
 @csr_slow()
-@given(csrs(values=True, dtype=['f8']))
+@given(csrs(values=True))
 def test_unit_norm(csr: CSR):
     # assume(spm.nnz >= 10)
     backup = csr.copy()
@@ -142,7 +146,7 @@ def test_unit_norm(csr: CSR):
 
 
 @csr_slow()
-@given(csrs(values=True, dtype=['f8']))
+@given(csrs(values=True))
 def test_filter(csr):
     assume(csr.nnz > 0)
     assume(not np.all(csr.values <= 0))  # we have to have at least one to retain
