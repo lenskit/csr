@@ -62,6 +62,10 @@ def csrs(draw, nrows=None, ncols=None, nnz=None, max_nnz=None, max_density=0.5,
         values = draw(st.booleans())
     if values:
         vals = draw(finite_arrays(nnz, dtype=dtype))
+        nz = vals != 0.0
+        rows = rows[nz]
+        cols = cols[nz]
+        vals = vals[nz]
     else:
         vals = None
     return CSR.from_coo(rows, cols, vals, (nrows, ncols))
