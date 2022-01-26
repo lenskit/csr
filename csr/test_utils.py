@@ -2,6 +2,8 @@
 CSR test utilities.
 """
 
+from collections.abc import Sequence
+
 import numpy as np
 import scipy.sparse as sps
 
@@ -27,7 +29,7 @@ def finite_arrays(draw, shape, dtype=np.float64(), min_value=-1.0e3, max_value=1
 
 @st.composite
 def csrs(draw, nrows=None, ncols=None, nnz=None, max_nnz=None, max_density=0.5,
-         values=None, dtype=np.float64()):
+         values=None, dtype=['f4', 'f8']):
     "Draw CSR matrices by generating COO data."
     if ncols is None:
         ncols = draw(st.integers(1, 80))
@@ -54,7 +56,7 @@ def csrs(draw, nrows=None, ncols=None, nnz=None, max_nnz=None, max_density=0.5,
 
     if isinstance(dtype, st.SearchStrategy):
         dtype = draw(dtype)
-    elif isinstance(dtype, list):
+    elif isinstance(dtype, Sequence) and not isinstance(dtype, str):
         dtype = draw(st.sampled_from(dtype))
     dtype = np.dtype(dtype)
 

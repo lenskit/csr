@@ -7,6 +7,7 @@ from csr.test_utils import csr_slow, csrs, matrices
 from pytest import raises
 from hypothesis import given, assume
 import hypothesis.strategies as st
+import hypothesis.extra.numpy as nph
 
 
 def test_csr_rowinds():
@@ -101,8 +102,12 @@ def test_drop_values(csr):
 
 
 @csr_slow()
-@given(csrs(), st.floats(allow_infinity=False, allow_nan=False))
-def test_fill_values(csr, x):
+@given(st.data(), csrs())
+def test_fill_values(data, csr):
+    dtype = np.dtype('f8')
+    if csr.values is not None:
+        dtype = csr.values.dtype
+    x = data.draw(nph.from_dtype(dtype, allow_infinity=False, allow_nan=False))
     csr.fill_values(x)
     assert all(csr.values == x)
 
