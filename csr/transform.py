@@ -12,7 +12,7 @@ _log = logging.getLogger(__name__)
 @njit(nogil=True)
 def center_rows(csr):
     "Mean-center the nonzero values of each row of a CSR."
-    means = np.zeros(csr.nrows)
+    means = np.zeros(csr.nrows, dtype=csr.values.dtype)
     for i in range(csr.nrows):
         sp, ep = csr.row_extent(i)
         if sp == ep:
@@ -28,7 +28,7 @@ def center_rows(csr):
 @njit(nogil=True)
 def unit_rows(csr):
     "Normalize the rows of a CSR to unit vectors."
-    norms = np.zeros(csr.nrows)
+    norms = np.zeros(csr.nrows, dtype=csr.values.dtype)
     for i in range(csr.nrows):
         sp, ep = csr.row_extent(i)
         if sp == ep:
