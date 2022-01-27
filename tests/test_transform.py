@@ -94,7 +94,7 @@ def test_mean_center(csr):
     backup = csr.copy()
     if csr.values.dtype == np.dtype('f4'):
         rel_tol = 1.0e-5
-        abs_tol = 1.0e-4
+        abs_tol = 1.0e-3
     else:
         rel_tol = 1.0e-6
         abs_tol = 1.0e-10
