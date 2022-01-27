@@ -20,6 +20,9 @@ def to_handle(csr):
     least as long as the handle.  The handle must be explicitly released.
 
     Handles are opaque as far as callers are concerned.
+
+    Creating a handle **may** copy data; modifying the matrix is not guaranteed to
+    modify handles created from it.
     """
     return csr
 
