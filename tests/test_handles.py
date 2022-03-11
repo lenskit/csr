@@ -10,7 +10,7 @@ from hypothesis import given
 @csr_slow(divider=1)
 @given(csrs())
 def test_make_handle(kernel, csr):
-    h = kernel.to_handle(csr.R)
+    h = kernel.to_handle(csr)
     try:
         assert h is not None
         c2 = kernel.from_handle(h)
