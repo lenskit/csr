@@ -31,7 +31,7 @@ dev = [
     "flake8",
     "rstcheck",
     "invoke",
-    "conda-lock>=0.13.2",
+    "lenskit-build-helpers",
     "sphinx-autobuild >=2021",
 ]
 doc = [

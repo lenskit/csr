@@ -33,26 +33,13 @@ jobs:
       with:
         fetch-depth: 0
 
-    - name: Prepare Windows environment
-      if: runner.os == 'Windows'
-      shell: pwsh
-      run: |
-        choco install wget --no-progress
-
-    - name: Prepare Conda environment spec
-      id: conda-lock
-      shell: bash
-      run: |
-        bash lkbuild/lock-for-ci.sh -v $PYVER -m mkl-devel.yml
-      env:
-        RUNNER: ${{runner.os}}
-        PYVER: ${{matrix.python}}
-
-    - name: Initialize Conda
-      uses: conda-incubator/setup-miniconda@v2
+    - name: 👢 Set up Conda environment
+      uses: lenskit/lkbuild/actions/setup-conda-env@main
+      id: setup
       with:
         activate-environment: csr
-        environment-file: ${{steps.conda-lock.outputs.environment-file}}
+        python-version: ${{matrix.python}}
+        mixin: mkl-devel.yml
 
     - name: 🔎 Inspect environment
       run: |
@@ -105,23 +92,10 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Set up Python
-        uses: actions/setup-python@v1
+      - name: Set up Python and environment
+        uses: lenskit/lkbuild/actions/setup-vanilla-env@main
         with:
           python-version: ${{matrix.python}}
-          architecture: x64
-
-      - name: Set up Python build deps
-        env:
-          PIP_PREFER_BINARY: 'true'
-        run: |
-          python -m pip install -U flit wheel
-
-      - name: Install CSR and its deps
-        env:
-          PIP_PREFER_BINARY: 'true'
-        run: |
-          flit install --pth-file --deps develop
 
       - name: Run tests
         run: |
