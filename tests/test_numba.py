@@ -1,6 +1,8 @@
 """
 Tests to make sure the Numba interface for CSR is usable.
 """
+
+import logging
 from textwrap import dedent
 from _pytest.python_api import approx
 import numpy as np
@@ -9,11 +11,11 @@ from csr.test_utils import csrs, mm_pairs
 
 from numba import njit
 
-from hypothesis import given
+from hypothesis import given, assume, settings, Phase
 import hypothesis.strategies as st
 import hypothesis.extra.numpy as nph
 
-
+_log = logging.getLogger(__name__)
 _getters = {}
 
 for __a in ['ncols', 'nrows', 'nnz', 'rowptrs', 'colinds', 'values']:
@@ -142,9 +144,19 @@ def _mult(A, B, transpose):
     return A.multiply(B, transpose)
 
 
-@given(mm_pairs(), st.booleans())
+def isnormal(x):
+    finf = np.finfo(x.dtype)
+    mask = x == 0
+    mask |= np.abs(x) >= finf.tiny
+    return mask
+
+
+# @settings(phases=[Phase.explicit, Phase.reuse, Phase.generate, Phase.explain])
+@given(mm_pairs(values='normal'), st.booleans())
 def test_numba_mult(pair, transpose):
     A, B = pair
+    assume(np.all(isnormal(A.values)))
+    assume(np.all(isnormal(B.values)))
 
     spA = A.to_scipy()
     spB = B.to_scipy()
@@ -155,10 +167,31 @@ def test_numba_mult(pair, transpose):
 
     res = _mult(A, B, transpose)
 
+    if res.nnz > 0:
+        _log.info('CSR min: %e', np.min(np.abs(res.values)))
+        _log.info('SciPy min: %e', np.min(np.abs(spC.data)))
+        # assert np.min(np.abs(res.values)) == np.min(np.abs(spC.data))
+
     cnr, cnc = spC.shape
     assert res.nrows == cnr
     assert res.ncols == cnc
-    assert res.nnz == spC.nnz
+    try:
+        assert res.nnz == spC.nnz
+    except AssertionError as e:
+        # let's do a little diagnostic
+        rnp = res.to_scipy().toarray()
+        snp = spC.toarray()
+        mask = rnp != snp
+        _log.info('CSR where diff: %s', rnp[mask])
+        _log.info('scipy where diff: %s', snp[mask])
+        (nzr, nzc) = mask.nonzero()
+        for r, c in zip(nzr, nzc):
+            if snp[r, c] == 0:
+                _log.info('should be 0, is %e', rnp[r, c])
+                _log.info('left row:\n%s', spA.toarray()[r, :])
+                _log.info('right col:\n%s', spB.toarray()[:, c])
+                _log.info('dot prod is %e', np.dot(spA.toarray()[r, :], spB.toarray()[:, c]))
+        raise e
 
 
 @njit
