@@ -539,6 +539,7 @@ class CSR(_csr_base):
                 with releasing(c_h, K):
                     crepr = K.from_handle(c_h)
 
+            crepr._filter_zeros()
             return crepr
 
         if self.nnz <= K.max_nnz:
@@ -574,6 +575,13 @@ class CSR(_csr_base):
                 with releasing(K.to_handle(s), K) as h:
                     svs.append(K.mult_vec(h, v))
             return np.concatenate(svs)
+
+    def _filter_zeros(self):
+        """
+        Filter out the stored zero values in-place.
+        """
+        if self.values is not None:
+            _struct.filter_zeros(self)
 
     def _shard_rows(self, tgt_nnz):
         """

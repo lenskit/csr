@@ -56,3 +56,22 @@ def get_colinds(self):
 @njit
 def get_values(self):
     return self.values
+
+
+def _filter_zeros(csr):
+    "Filter out the zero values in a CSR, in-place."
+    nnz = 0
+    for i in range(csr.nrows):
+        sp, ep = csr.row_extent(i)
+        csr.rowptrs[i] = nnz
+        for jp in range(sp, ep):
+            if csr.values[jp] != 0:
+                csr.colinds[nnz] = csr.colinds[jp]
+                csr.values[nnz] = csr.values[jp]
+                nnz += 1
+
+    csr.rowptrs[csr.nrows] = nnz
+    csr.nnz = nnz
+
+
+filter_zeros = njit(nogil=True)(_filter_zeros)

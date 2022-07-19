@@ -8,7 +8,7 @@ from numba.experimental import structref
 
 from ._struct import CSRType
 from .csr import CSR
-from . import _rows, structure
+from . import _rows, _struct, structure
 
 structref.define_proxy(CSR, CSRType, [
     'nrows', 'ncols', 'nnz',
@@ -88,6 +88,16 @@ def _csr_required_values(csr):
         return ones
 
 
+@overload_method(CSRType, '_filter_zeros')
+def _csr_filter_zeros(csr):
+    if csr.has_values:
+        return _struct._filter_zeros
+    else:
+        def noop(csr):
+            pass
+        return noop
+
+
 @overload_method(CSRType, 'multiply')
 def _csr_multiply(csr, other, transpose):
     from . import kernel
@@ -106,6 +116,7 @@ def _csr_multiply(csr, other, transpose):
         result = kernel.from_handle(ch)
         kernel.release_handle(ch)
 
+        result._filter_zeros()
         return result
 
     return mult
