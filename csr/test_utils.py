@@ -20,10 +20,10 @@ def fractions(**kwargs):
 
 
 @st.composite
-def finite_arrays(draw, shape, dtype=np.float64(), min_value=-1.0e3, max_value=1.0e3):
+def finite_arrays(draw, shape, dtype=np.float64(), min_value=-1.0e3, max_value=1.0e3, **kwargs):
     dtype = np.dtype(dtype)
     elts = nph.from_dtype(dtype, min_value=min_value, max_value=max_value,
-                          allow_infinity=False, allow_nan=False)
+                          allow_infinity=False, allow_nan=False, **kwargs)
     return draw(nph.arrays(dtype, shape, elements=elts))
 
 
@@ -63,7 +63,8 @@ def csrs(draw, nrows=None, ncols=None, nnz=None, max_nnz=None, max_density=0.5,
     if values is None:
         values = draw(st.booleans())
     if values:
-        vals = draw(finite_arrays(nnz, dtype=dtype))
+        sn = False if values == 'normal' else True
+        vals = draw(finite_arrays(nnz, dtype=dtype, allow_subnormal=sn))
         nz = vals != 0.0
         rows = rows[nz]
         cols = cols[nz]
@@ -90,8 +91,12 @@ def mm_pairs(draw, max_shape=(100, 100, 100), dtype=np.float64(), **kwargs):
     mids = draw(st.integers(1, mm))
     cols = draw(st.integers(1, mc))
 
-    A = draw(csrs(rows, mids, values=True, dtype=dtype, **kwargs))
-    B = draw(csrs(mids, cols, values=True, dtype=dtype, **kwargs))
+    if 'values' not in kwargs:
+        kwargs = dict(kwargs)
+        kwargs['values'] = True
+
+    A = draw(csrs(rows, mids, dtype=dtype, **kwargs))
+    B = draw(csrs(mids, cols, dtype=dtype, **kwargs))
 
     return A, B
 
