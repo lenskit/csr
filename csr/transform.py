@@ -37,8 +37,18 @@ def unit_rows(csr):
             continue  # empty row
         vs = csr.row_vs(i)
 
-        # this hack courtesy of @jekstrand
-        # find the maximum absolute value
+        # one would think that unit-normalizing is a straightforward operation, but IEEE-754
+        # disagrees.  If the values are all very small, the naive  approach will result in an
+        # incorrect norm (because some of the squares will be zero or unhelpfully close to it),
+        # and the resulting row will have a norm that exceeds 1.
+        #
+        # This solution is courtesy of @jekstrand:
+        # https://twitter.com/jekstrand_/status/1549222506938130433
+        #
+        # We use a pre-normalization stage to get the values up into a reasonable range, before
+        # computing the proper Euclidean norm.
+
+        # first, find the maximum absolute value
         vmax = np.max(np.abs(vs))
 
         # get its exponent, and pre-normalize to bring the values up if they're all tiny
@@ -48,7 +58,7 @@ def unit_rows(csr):
         prenorm = math.ldexp(1.0, pnexp)
         csr.values[sp:ep] *= prenorm
 
-        # now we normalize the non-subnormal values
+        # now we normalize the reasonably-scaled values
         inorm = np.linalg.norm(csr.values[sp:ep])
         norms[i] = inorm / prenorm
         csr.values[sp:ep] /= inorm
