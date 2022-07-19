@@ -21,7 +21,7 @@ def test_mult_vec(kernel, data, csra):
 
     v2 = md @ v
 
-    assert prod == approx(v2, nan_ok=True, rel=1.0e-5)
+    assert prod == approx(v2, nan_ok=True, rel=1.0e-5, abs=1.0e-10)
 
 
 @settings(deadline=None)
