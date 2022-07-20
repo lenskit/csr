@@ -59,7 +59,7 @@ def get_values(self):
 
 
 def _filter_zeros(csr):
-    "Filter out the zero values in a CSR, in-place."
+    "Filter out the zero values in a CSR, in-place. Only works when CSR has values."
     nnz = 0
     for i in range(csr.nrows):
         sp, ep = csr.row_extent(i)
@@ -71,6 +71,8 @@ def _filter_zeros(csr):
                 nnz += 1
 
     csr.rowptrs[csr.nrows] = nnz
+    csr.colinds = csr.colinds[:nnz]
+    csr.values = csr.values[:nnz]
     csr.nnz = nnz
 
 
