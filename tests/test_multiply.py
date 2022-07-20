@@ -20,7 +20,7 @@ def test_multiply(kernel, data):
 
     prod = A.multiply(B)
     assert isinstance(prod, CSR)
-    _log.info('got %r', prod)
+    _log.debug('got %r', prod)
     assert prod.nrows == A.nrows
     assert prod.ncols == B.ncols
 
@@ -54,7 +54,7 @@ def test_multiply_transpose(kernel, data):
 
     prod = A.multiply(B, transpose=True)
     assert isinstance(prod, CSR)
-    _log.info('got %r', prod)
+    _log.debug('got %r', prod)
     assert prod.nrows == A.nrows
     assert prod.ncols == B.nrows
 

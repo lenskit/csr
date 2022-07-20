@@ -167,11 +167,6 @@ def test_numba_mult(pair, transpose):
 
     res = _mult(A, B, transpose)
 
-    if res.nnz > 0:
-        _log.info('CSR min: %e', np.min(np.abs(res.values)))
-        _log.info('SciPy min: %e', np.min(np.abs(spC.data)))
-        # assert np.min(np.abs(res.values)) == np.min(np.abs(spC.data))
-
     cnr, cnc = spC.shape
     assert res.nrows == cnr
     assert res.ncols == cnc

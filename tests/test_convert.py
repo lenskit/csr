@@ -88,7 +88,7 @@ def test_csr_from_coo(data, nrows, ncols, dtype):
 def test_csr_from_coo_novals(data, nrows, ncols):
     n = nrows * ncols
     nnz = data.draw(st.integers(0, int(n * 0.75)))
-    _log.info('testing %d×%d (%d nnz) with no values', nrows, ncols, nnz)
+    _log.debug('testing %d×%d (%d nnz) with no values', nrows, ncols, nnz)
 
     coords = st.integers(0, max(n - 1, 0))
     coords = data.draw(nph.arrays(np.int32, nnz, elements=coords, unique=True))
