@@ -158,8 +158,8 @@ def test_numba_mult(pair, transpose):
     assume(np.all(isnormal(A.values)))
     assume(np.all(isnormal(B.values)))
 
-    dA = A.to_scipy().toarray
-    dB = B.to_scipy().toarray
+    dA = A.to_scipy().toarray()
+    dB = B.to_scipy().toarray()
     dC = dA @ dB
 
     if transpose:
@@ -177,14 +177,14 @@ def test_numba_mult(pair, transpose):
         rnp = res.to_scipy().toarray()
         mask = rnp != dC
         _log.info('CSR where diff: %s', rnp[mask])
-        _log.info('scipy where diff: %s', snp[mask])
+        _log.info('numpy where diff: %s', dC[mask])
         (nzr, nzc) = mask.nonzero()
         for r, c in zip(nzr, nzc):
-            if snp[r, c] == 0:
+            if dC[r, c] == 0:
                 _log.info('should be 0, is %e', rnp[r, c])
-                _log.info('left row:\n%s', spA.toarray()[r, :])
-                _log.info('right col:\n%s', spB.toarray()[:, c])
-                _log.info('dot prod is %e', np.dot(spA.toarray()[r, :], spB.toarray()[:, c]))
+                _log.info('left row:\n%s', dA[r, :])
+                _log.info('right col:\n%s', dB[:, c])
+                _log.info('dot prod is %e', np.dot(dA[r, :], dB[:, c]))
         raise e
 
 
