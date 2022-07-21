@@ -1,4 +1,5 @@
 import logging
+import numpy as np
 
 from csr import CSR
 from csr.test_utils import mm_pairs, csr_slow
@@ -15,8 +16,8 @@ _log = logging.getLogger(__name__)
 def test_multiply(kernel, data):
     A, B = data.draw(mm_pairs())
     assume(B.nnz < kernel.max_nnz)
-    spA = A.to_scipy()
-    spB = B.to_scipy()
+    dA = A.to_scipy().toarray()
+    dB = B.to_scipy().toarray()
 
     prod = A.multiply(B)
     assert isinstance(prod, CSR)
@@ -24,18 +25,19 @@ def test_multiply(kernel, data):
     assert prod.nrows == A.nrows
     assert prod.ncols == B.ncols
 
-    sp_prod = spA @ spB
-    abnr, abnc = sp_prod.shape
+    dprod = dA @ dB
+    abnr, abnc = dprod.shape
     assert prod.nrows == abnr
     assert prod.ncols == abnc
 
-    assert prod.nnz == sp_prod.nnz
+    # assert prod.nnz == sp_prod.nnz
     if prod.nnz > 0:
         assert prod.values is not None
+        assert np.all(prod.values != 0)
     nrows = A.nrows
 
     for i in range(nrows):
-        r_scipy = sp_prod.getrow(i).toarray().ravel()
+        r_scipy = dprod[i, :]
         r_ours = prod.row(i)
 
         assert len(r_ours) == len(r_scipy)
@@ -49,8 +51,8 @@ def test_multiply_transpose(kernel, data):
     assume(B.nnz < kernel.max_nnz)
     B = B.transpose()
 
-    spA = A.to_scipy()
-    spB = B.to_scipy()
+    dA = A.to_scipy().toarray()
+    dB = B.to_scipy().toarray()
 
     prod = A.multiply(B, transpose=True)
     assert isinstance(prod, CSR)
@@ -58,18 +60,19 @@ def test_multiply_transpose(kernel, data):
     assert prod.nrows == A.nrows
     assert prod.ncols == B.nrows
 
-    sp_prod = spA @ spB.T
-    abnr, abnc = sp_prod.shape
+    dprod = dA @ dB.T
+    abnr, abnc = dprod.shape
     assert prod.nrows == abnr
     assert prod.ncols == abnc
 
-    assert prod.nnz == sp_prod.nnz
+    # assert prod.nnz == sp_prod.nnz
     if prod.nnz > 0:
         assert prod.values is not None
+        assert np.all(prod.values != 0)
     nrows = A.nrows
 
     for i in range(nrows):
-        r_scipy = sp_prod.getrow(i).toarray().ravel()
+        r_scipy = dprod[i, :]
         r_ours = prod.row(i)
 
         assert len(r_ours) == len(r_scipy)
