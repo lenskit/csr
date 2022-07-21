@@ -171,7 +171,7 @@ def test_numba_mult(pair, transpose):
     assert res.nrows == cnr
     assert res.ncols == cnc
     try:
-        assert res.to_scipy().toarray() == approx(dC)
+        assert res.to_scipy().toarray() == approx(dC, rel=1.0e-5, abs=1.0e-10)
     except AssertionError as e:
         # let's do a little diagnostic
         rnp = res.to_scipy().toarray()
