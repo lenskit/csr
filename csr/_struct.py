@@ -71,9 +71,9 @@ def _filter_zeros(csr):
                 nnz += 1
 
     csr.rowptrs[csr.nrows] = nnz
+    csr.nnz = nnz
     csr.colinds = csr.colinds[:nnz]
     csr.values = csr.values[:nnz]
-    csr.nnz = nnz
 
 
 filter_zeros = njit(nogil=True)(_filter_zeros)
