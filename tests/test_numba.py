@@ -158,25 +158,24 @@ def test_numba_mult(pair, transpose):
     assume(np.all(isnormal(A.values)))
     assume(np.all(isnormal(B.values)))
 
-    spA = A.to_scipy()
-    spB = B.to_scipy()
-    spC = spA @ spB
+    dA = A.to_scipy().toarray
+    dB = B.to_scipy().toarray
+    dC = dA @ dB
 
     if transpose:
         B = B.transpose()
 
     res = _mult(A, B, transpose)
 
-    cnr, cnc = spC.shape
+    cnr, cnc = dC.shape
     assert res.nrows == cnr
     assert res.ncols == cnc
     try:
-        assert res.nnz == spC.nnz
+        assert res.to_scipy().toarray() == approx(dC)
     except AssertionError as e:
         # let's do a little diagnostic
         rnp = res.to_scipy().toarray()
-        snp = spC.toarray()
-        mask = rnp != snp
+        mask = rnp != dC
         _log.info('CSR where diff: %s', rnp[mask])
         _log.info('scipy where diff: %s', snp[mask])
         (nzr, nzc) = mask.nonzero()
