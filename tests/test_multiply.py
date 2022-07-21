@@ -76,4 +76,4 @@ def test_multiply_transpose(kernel, data):
         r_ours = prod.row(i)
 
         assert len(r_ours) == len(r_scipy)
-        assert r_ours == approx(r_scipy)
+        assert r_ours == approx(r_scipy, rel=1.0e-5, abs=1.0e-10)
