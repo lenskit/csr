@@ -13,7 +13,7 @@ requires-python = ">= 3.7"
 requires = [
     "numba >=0.51,<0.56",
     "numpy >=1.17",
-    "scipy ==1.*"
+    "scipy >=1.1,<2"
 ]
 
 [tool.flit.metadata.requires-extra]
