@@ -150,7 +150,7 @@ jobs:
   sdist:
     name: Process Build & Test Results
     runs-on: ubuntu-latest
-    needs: [test-conda, test-vanilla]
+    needs: [test-conda, test-vanilla, test-mindeps]
 
     steps:
     - uses: actions/checkout@v2
