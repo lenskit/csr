@@ -31,7 +31,7 @@ dev = [
     "flake8",
     "rstcheck",
     "invoke",
-    "lenskit-build-helpers",
+    "lenskit-build-helpers >=0.1",
     "sphinx-autobuild >=2021",
 ]
 doc = [
