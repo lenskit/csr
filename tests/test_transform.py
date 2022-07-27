@@ -78,7 +78,7 @@ def test_sort_rows(csr):
 def test_kernel_sort_rows(kernel, csr):
     tv = np.ones(csr.ncols)
     x1 = csr.mult_vec(tv)
-    h = kernel.to_handle(csr.R)
+    h = kernel.to_handle(csr)
     kernel.order_columns(h)
     c2 = kernel.from_handle(h)
     kernel.release_handle(h)
