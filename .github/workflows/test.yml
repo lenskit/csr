@@ -7,6 +7,10 @@ on:
     types: [published]
   pull_request:
 
+concurrency:
+  group: test-${{github.ref}}
+  cancel-in-progress: true
+
 defaults:
   run:
     shell: bash -l {0}
