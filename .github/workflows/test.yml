@@ -152,8 +152,8 @@ jobs:
             coverage.xml
             emissions.csv
 
-  sdist:
-    name: Process Build & Test Results
+  process-tests:
+    name: Process Test Results
     runs-on: ubuntu-latest
     needs: [test-conda, test-vanilla, test-mindeps]
 
@@ -161,17 +161,6 @@ jobs:
     - uses: actions/checkout@v2
       with:
         fetch-depth: 0
-
-    - name: Fetch Git tags
-      run: git fetch --tags
-
-    - name: Set up Python
-      uses: actions/setup-python@v2
-      with:
-        python-version: 3.8
-
-    - name: Install Python deps
-      run: pip install -U flit
 
     - name: Download test results
       uses: actions/download-artifact@v2
@@ -186,6 +175,28 @@ jobs:
       with:
         directory: test-logs/
 
+    - name: Upload all test data
+      uses: actions/upload-artifact@v2
+      with:
+        name: test-outputs
+        path: test-logs
+
+  package:
+    name: Package and Publish
+    runs-on: ubuntu-latest
+    needs: [process-tests]
+    steps:
+    - name: Fetch Git tags
+      run: git fetch --tags
+
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: "3.10"
+
+    - name: Install Python deps
+      run: pip install -U flit
+
     - name: Build distribution
       run: flit build
 
@@ -194,12 +205,6 @@ jobs:
       with:
         name: pypi-pkgs
         path: dist
-
-    - name: Upload all test data
-      uses: actions/upload-artifact@v2
-      with:
-        name: test-outputs
-        path: test-logs
 
     - name: List dist dir
       run: ls -R dist
@@ -213,4 +218,3 @@ jobs:
         TWINE_NON_INTERACTIVE: y
         FLIT_USERNAME: __token__
         FLIT_PASSWORD: ${{ secrets.PYPI_TOKEN }}
-
