@@ -8,9 +8,10 @@ classifiers = [
     "License :: OSI Approved :: MIT License",
     "Intended Audience :: Science/Research",
 ]
+description = "Compressed Sparse Row matrices for Python, with Numba API."
 readme = "README.md"
 license = { file = "LICENSE" }
-dynamic = ['version', 'description']
+dynamic = ['version']
 requires-python = ">= 3.7"
 dependencies = [
     "numba >=0.51,<0.57",
