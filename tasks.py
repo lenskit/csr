@@ -1,12 +1,27 @@
 import os
 import sys
 import warnings
+from shutil import rmtree
 from pathlib import Path
 from cffi import FFI
 
 from invoke import task
 from lkbuild.tasks import *  # NOQA: F403, F401
 
+
+@task
+def clean(c):
+    "Clean up build products"
+
+    print('removing build dir', file=sys.stderr)
+    rmtree('build')
+    print('removing dist dir', file=sys.stderr)
+    rmtree('dist')
+
+    pkg_dir = Path(__file__).parent / 'csr' / 'kernels' / 'mkl'
+    for f in pkg_dir.glob('_mkl_ops.*'):
+        print('removing', f, file=sys.stderr)
+        f.unlink(True)
 
 @task
 def build_mkl(c, trace=False):
