@@ -1,22 +1,32 @@
 [build-system]
-requires = ["flit_core >=2,<4"]
+requires = ["flit_core >=3.2,<4"]
 build-backend = "flit_core.buildapi"
 
-[tool.flit.metadata]
-module = "csr"
-author = "Michael Ekstrand <michaelekstrand@boisestate.edu>"
-author-email = "michaelekstrand@boisestate.edu"
-home-page = "https://csr.lenskit.org"
-classifiers = ["License :: OSI Approved :: MIT License"]
-description-file = "README.md"
+[project]
+name = "csr"
+classifiers = [
+    "License :: OSI Approved :: MIT License",
+    "Intended Audience :: Science/Research",
+]
+readme = "README.md"
+license = { file = "LICENSE" }
+dynamic = ['version', 'description']
 requires-python = ">= 3.7"
-requires = [
+dependencies = [
     "numba >=0.51,<0.57",
     "numpy >=1.17",
     "scipy >=1.2,<2"
 ]
 
-[tool.flit.metadata.requires-extra]
+[[project.authors]]
+name = "Michael Ekstrand"
+email = "michaelekstrand@boisestate.edu"
+
+[project.urls]
+home-page = "https://csr.lenskit.org"
+source = "https://github.com/lenskit/csr"
+
+[project.optional-dependencies]
 test = [
     "pytest >=6",
     "pytest-doctestplus >=0.9",
@@ -26,7 +36,7 @@ test = [
     "psutil >=5"
 ]
 dev = [
-    "flit",
+    "flit >=3.2,<4",
     "keyring",
     "flake8",
     "rstcheck",
