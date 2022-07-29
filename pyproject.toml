@@ -13,7 +13,7 @@ requires-python = ">= 3.7"
 requires = [
     "numba >=0.51,<0.56",
     "numpy >=1.17",
-    "scipy ==1.*"
+    "scipy >=1.1,<2"
 ]
 
 [tool.flit.metadata.requires-extra]
@@ -22,7 +22,7 @@ test = [
     "pytest-doctestplus >=0.9",
     "pytest-benchmark >=3",
     "pytest-cov >=2.12",
-    "hypothesis >=6",
+    "hypothesis ~=6.30",
     "psutil >=5"
 ]
 dev = [
@@ -31,7 +31,7 @@ dev = [
     "flake8",
     "rstcheck",
     "invoke",
-    "conda-lock>=0.13.2",
+    "lenskit-build-helpers >=0.1",
     "sphinx-autobuild >=2021",
 ]
 doc = [
@@ -56,15 +56,7 @@ exclude = [
 ]
 
 [tool.conda-lock]
-channels = ['conda-forge']
-
-[tool.envtool.conda]
-name = "csr"
-channels = ["conda-forge"]
-
-[tool.envtool.conda.extras]
-mkl = [
-    "mkl-devel=2020",
-    "libblas=*=*mkl",
-    "c-compiler"
+channels = [
+    "conda-forge",
+    "lenskit",
 ]

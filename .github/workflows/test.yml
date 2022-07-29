@@ -3,10 +3,13 @@ on:
   push:
     branches:
       - main
-      - series/*
   release:
     types: [published]
   pull_request:
+
+concurrency:
+  group: test-${{github.ref}}
+  cancel-in-progress: true
 
 defaults:
   run:
@@ -24,35 +27,23 @@ jobs:
         - windows
         - ubuntu
         python:
-        - 3.7
-        - 3.8
-        - 3.9
+        - "3.7"
+        - "3.8"
+        - "3.9"
+        - "3.10"
 
     steps:
     - uses: actions/checkout@v2
       with:
         fetch-depth: 0
 
-    - name: Prepare Windows environment
-      if: runner.os == 'Windows'
-      shell: pwsh
-      run: |
-        choco install wget --no-progress
-
-    - name: Prepare Conda environment spec
-      id: conda-lock
-      shell: bash
-      run: |
-        bash lkbuild/lock-for-ci.sh -v $PYVER -m mkl-devel.yml
-      env:
-        RUNNER: ${{runner.os}}
-        PYVER: ${{matrix.python}}
-
-    - name: Initialize Conda
-      uses: conda-incubator/setup-miniconda@v2
+    - name: 👢 Set up Conda environment
+      uses: lenskit/lkbuild/actions/setup-conda-env@main
+      id: setup
       with:
         activate-environment: csr
-        environment-file: ${{steps.conda-lock.outputs.environment-file}}
+        python-version: ${{matrix.python}}
+        mixin: mkl-devel.yml
 
     - name: 🔎 Inspect environment
       run: |
@@ -60,7 +51,7 @@ jobs:
 
     - name: 🛠 Compile MKL helper
       run: |
-        python build_mkl.py
+        invoke build-mkl
 
     - name: Run tests
       run: |
@@ -75,8 +66,14 @@ jobs:
     - name: Aggregate coverage data
       run: coverage xml
 
-    - name: Upload coverage
-      uses: codecov/codecov-action@v1
+    - name: Upload logs
+      uses: actions/upload-artifact@v2
+      with:
+        name: log-conda-${{matrix.platform}}-py${{matrix.python}}
+        path: |
+          test*.log
+          coverage.xml
+          emissions.csv
 
   test-vanilla:
     name: Test w/ Vanilla Python ${{matrix.python}} on ${{matrix.platform}}
@@ -99,23 +96,10 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Set up Python
-        uses: actions/setup-python@v1
+      - name: Set up Python and environment
+        uses: lenskit/lkbuild/actions/setup-vanilla-env@main
         with:
           python-version: ${{matrix.python}}
-          architecture: x64
-
-      - name: Set up Python build deps
-        env:
-          PIP_PREFER_BINARY: 'true'
-        run: |
-          python -m pip install -U flit wheel
-
-      - name: Install CSR and its deps
-        env:
-          PIP_PREFER_BINARY: 'true'
-        run: |
-          flit install --pth-file --deps develop
 
       - name: Run tests
         run: |
@@ -124,13 +108,53 @@ jobs:
       - name: Aggreagate Coverage Data
         run: coverage xml
 
-      - name: Upload coverage
-        uses: codecov/codecov-action@v1
+      - name: Upload logs
+        uses: actions/upload-artifact@v2
+        with:
+          name: log-vanilla-${{matrix.platform}}-py${{matrix.python}}
+          path: |
+            test*.log
+            coverage.xml
+            emissions.csv
+
+  test-mindeps:
+    name: Test w/ Oldest Deps
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python and environment
+        uses: lenskit/lkbuild/actions/setup-vanilla-env@main
+        with:
+          python-version: "3.7"
+          include-dev-dependencies: false
+          extras: test
+          constraints-file: min-constraints.txt
+
+      - name: Run tests
+        run: |
+          python -m pytest --cov=csr --cov-report=xml --log-file=test.log
+
+      - name: Aggreagate Coverage Data
+        run: coverage xml
+
+      - name: Upload logs
+        uses: actions/upload-artifact@v2
+        with:
+          name: log-vanilla-${{matrix.platform}}-py${{matrix.python}}
+          path: |
+            test*.log
+            coverage.xml
+            emissions.csv
 
   sdist:
-    name: Build Source Packages
+    name: Process Build & Test Results
     runs-on: ubuntu-latest
-    needs: [test-conda, test-vanilla]
+    needs: [test-conda, test-vanilla, test-mindeps]
 
     steps:
     - uses: actions/checkout@v2
@@ -148,14 +172,33 @@ jobs:
     - name: Install Python deps
       run: pip install -U flit
 
+    - name: Download test results
+      uses: actions/download-artifact@v2
+      with:
+        path: test-logs
+
+    - name: List log files
+      run: ls -lR test-logs
+
+    - name: Upload test coverage
+      uses: codecov/codecov-action@v2
+      with:
+        directory: test-logs/
+
     - name: Build distribution
       run: flit build
 
-    - name: Save archive
-      uses: actions/upload-artifact@v1
+    - name: Save distribution archive
+      uses: actions/upload-artifact@v2
       with:
         name: pypi-pkgs
         path: dist
+
+    - name: Upload all test data
+      uses: actions/upload-artifact@v2
+      with:
+        name: test-outputs
+        path: test-logs
 
     - name: List dist dir
       run: ls -R dist
