@@ -6,7 +6,10 @@ from pathlib import Path
 from cffi import FFI
 
 from invoke import task
-from lkbuild.tasks import *  # NOQA: F403, F401
+try:
+    from lkbuild.tasks import *  # NOQA: F403, F401
+except ImportError:
+    warnings.warn('lkbuild tasks not available')
 
 
 @task
