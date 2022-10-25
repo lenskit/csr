@@ -14,7 +14,7 @@ license = { file = "LICENSE" }
 dynamic = ['version']
 requires-python = ">= 3.7"
 dependencies = [
-    "numba >=0.51,<0.57",
+    "numba >=0.53,<0.57",
     "numpy >=1.17",
     "scipy >=1.2,<2"
 ]
