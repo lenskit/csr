@@ -16,31 +16,8 @@ from . import _struct, _rows
 INTC = np.iinfo(np.intc)
 _log = logging.getLogger(__name__)
 
-# ugly hack for a bug on Numba < 0.53
-if config.DISABLE_JIT:
-    class _csr_base:
-        def __init__(self, nrows, ncols, nnz, ptrs, inds, vals, _cast=True):
-            self.nrows = nrows
-            self.ncols = ncols
-            self.nnz = nnz
-            if _cast and np.max(ptrs, initial=0) <= INTC.max:
-                self.rowptrs = np.require(ptrs, np.intc, 'C')
-            else:
-                self.rowptrs = np.require(ptrs, requirements='C')
-            self.colinds = np.require(inds, np.intc, 'C')
-            if vals is not None:
-                self._values = np.require(vals, requirements='C')
-            else:
-                self._values = None
-
-        def _numba_box_(self, *args):
-            raise NotImplementedError()
-
-    NUMBA_ENABLED = False
-
-else:
-    _csr_base = structref.StructRefProxy
-    NUMBA_ENABLED = True
+_csr_base = structref.StructRefProxy
+NUMBA_ENABLED = not config.DISABLE_JIT
 
 
 class CSR(_csr_base):
