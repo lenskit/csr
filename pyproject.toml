@@ -29,7 +29,7 @@ source = "https://github.com/lenskit/csr"
 
 [project.optional-dependencies]
 test = [
-    "pytest ~=6.0",
+    "pytest ==6.*",
     "pytest-doctestplus >=0.9",
     "pytest-benchmark >=3",
     "pytest-cov >=2.12",
