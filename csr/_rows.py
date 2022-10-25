@@ -38,6 +38,7 @@ def _array_ones(csr, row):
 
 
 def array(csr, row):
+    "Get a row of the CSR as an array"
     if csr.values is not None:
         return _array_vals(csr, row)
     else:

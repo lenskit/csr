@@ -12,4 +12,4 @@ from .csr import CSR
 # set up the Numba wiring!
 from . import _wiring  # noqa: F401
 
-from csr.constructors import *  # noqa: F401, F403
+from .constructors import *  # noqa: F401, F403
