@@ -140,6 +140,12 @@ jobs:
         run: |
           python -m pytest --cov=csr --cov-report=xml --log-file=test.log
 
+      - name: Run tests without JIT
+        run: |
+          python -m pytest --cov=csr --cov-append --log-file=test-nojit.log --hypothesis-profile=nojit
+        env:
+          NUMBA_DISABLE_JIT: 1
+
       - name: Aggreagate Coverage Data
         run: coverage xml
 
