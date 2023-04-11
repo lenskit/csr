@@ -12,37 +12,66 @@ def extent(csr, row):
     return sp, ep
 
 
-def _array_vals(csr, row):
-    "Get a row as a dense vector."
-    v = np.zeros(csr.ncols, csr.values.dtype)
+def _fill_vals(csr, row, array):
+    sp, ep = csr.row_extent(row)
+    cols = csr.colinds[sp:ep]
+    array[cols] = csr.values[sp:ep]
+
+
+def _fill_ones(csr, row, array):
+    sp, ep = csr.row_extent(row)
+    cols = csr.colinds[sp:ep]
+    array[cols] = 1
+
+
+def _row_array(csr, row, fill, dtype):
+    v = np.zeros(csr.ncols, dtype=dtype)
     if csr.nnz == 0:
         return v
 
-    sp, ep = csr.row_extent(row)
-    cols = csr.colinds[sp:ep]
-    v[cols] = csr.values[sp:ep]
+    fill(csr, row, v)
+    return v
+
+
+def _mr_matrix(csr, rows, fill, dtype):
+    v = np.zeros(rows.shape + (csr.ncols,), dtype=dtype)
+    if csr.nnz == 0:
+        return v
+
+    for i, row in enumerate(rows):
+        fill(csr, row, v[i, :])
 
     return v
 
 
-def _array_ones(csr, row):
-    v = np.zeros(csr.ncols)
-    if csr.nnz == 0:
-        return v
-
-    sp, ep = csr.row_extent(row)
-    cols = csr.colinds[sp:ep]
-    v[cols] = 1
-
-    return v
+def _row_array_vals(csr, row):
+    return _row_array(csr, row, _fill_vals, csr.values.dtype)
 
 
-def array(csr, row):
+def _row_array_ones(csr, row):
+    return _row_array(csr, row, _fill_ones, None)
+
+
+def _mr_matrix_vals(csr, row):
+    return _mr_matrix(csr, row, _fill_vals, csr.values.dtype)
+
+
+def _mr_matrix_ones(csr, row):
+    return _mr_matrix(csr, row, _fill_ones, None)
+
+
+def row_array(csr, row):
     "Get a row of the CSR as an array"
-    if csr.values is not None:
-        return _array_vals(csr, row)
+    if row.shape == ():
+        if csr.values is not None:
+            return _row_array_vals(csr, row)
+        else:
+            return _row_array_ones(csr, row)
     else:
-        return _array_ones(csr, row)
+        if csr.values is not None:
+            return _mr_matrix_vals(csr, row)
+        else:
+            return _mr_matrix_ones(csr, row)
 
 
 def cs(csr, row):

@@ -24,9 +24,9 @@ def _csr_row_extent(csr, row):
 @overload_method(CSRType, 'row')
 def _csr_row(csr, row):
     if csr.has_values:
-        return _rows._array_vals
+        return _rows._row_array_vals
     else:
-        return _rows._array_ones
+        return _rows._row_array_ones
 
 
 @overload_method(CSRType, 'row_cs')

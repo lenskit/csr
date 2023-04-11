@@ -374,8 +374,10 @@ class CSR(_csr_base):
         """
         Return a row of this matrix as a dense ndarray.
 
+        .. note:: This method only supports single indices in Numba mode.
+
         Args:
-            row(int): the row index.
+            row(int or numpy.ndarray): the row index or indices.
 
         Returns:
             numpy.ndarray:
@@ -383,7 +385,8 @@ class CSR(_csr_base):
                 stores matrix structure, the returned vector has 1s where the CSR
                 records an entry.
         """
-        return _rows.array(self, row)
+        row = np.asarray(row, dtype='i4')
+        return _rows.row_array(self, row)
 
     def row_extent(self, row):
         """
