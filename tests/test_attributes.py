@@ -1,3 +1,4 @@
+import logging
 import numpy as np
 import scipy.sparse as sps
 
@@ -8,6 +9,8 @@ from pytest import raises
 from hypothesis import given, assume
 import hypothesis.strategies as st
 import hypothesis.extra.numpy as nph
+
+_log = logging.getLogger(__name__)
 
 
 def test_csr_rowinds():
@@ -75,6 +78,17 @@ def test_csr_row(csr):
         assert row.size == other.size
 
         assert all(row == other)
+
+
+@csr_slow()
+@given(st.data(), csrs(st.integers(1, 100), st.integers(1, 100)))
+def test_csr_rows(data, csr):
+    smat = csr.to_scipy()
+
+    rows = data.draw(st.lists(st.integers(0, csr.nrows - 1), max_size=csr.nrows, unique=True))
+    row_arrs = csr.row(rows)
+    other = smat[rows, :].toarray()
+    assert np.all(row_arrs == other)
 
 
 def test_csr_sparse_row():

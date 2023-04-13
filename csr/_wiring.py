@@ -3,6 +3,7 @@ Wire together the Numba and Python types.
 """
 
 import numpy as np
+from numba import types
 from numba.extending import overload_method
 from numba.experimental import structref
 
@@ -23,10 +24,16 @@ def _csr_row_extent(csr, row):
 
 @overload_method(CSRType, 'row')
 def _csr_row(csr, row):
-    if csr.has_values:
-        return _rows._array_vals
-    else:
-        return _rows._array_ones
+    if isinstance(row, types.Integer):
+        if csr.has_values:
+            return _rows._row_array_vals
+        else:
+            return _rows._row_array_ones
+    elif isinstance(row, types.ArrayCompatible):
+        if csr.has_values:
+            return _rows._mr_matrix_vals
+        else:
+            return _rows._mr_matrix_ones
 
 
 @overload_method(CSRType, 'row_cs')

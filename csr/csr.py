@@ -372,10 +372,10 @@ class CSR(_csr_base):
 
     def row(self, row):
         """
-        Return a row of this matrix as a dense ndarray.
+        Return one or more rows of this matrix as a dense ndarray.
 
         Args:
-            row(int): the row index.
+            row(int or numpy.ndarray): the row index or indices.
 
         Returns:
             numpy.ndarray:
@@ -383,7 +383,8 @@ class CSR(_csr_base):
                 stores matrix structure, the returned vector has 1s where the CSR
                 records an entry.
         """
-        return _rows.array(self, row)
+        row = np.asarray(row, dtype='i4')
+        return _rows.row_array(self, row)
 
     def row_extent(self, row):
         """
