@@ -386,6 +386,23 @@ class CSR(_csr_base):
         row = np.asarray(row, dtype='i4')
         return _rows.row_array(self, row)
 
+    def row_mask(self, row):
+        """
+        Return a dense logical array indicating which columns are set in the row
+        (or rows).
+
+        Args:
+            row(int or numpy.ndarray): the row index or indices.
+
+        Returns:
+            numpy.ndarray:
+                the row, with ``True`` for columns that are set on this row.  If
+                ``row`` is an array or list of length :math:`k`, this is a matrix
+                of shape :math:`k \\times \\mathrm{ncols}`.
+        """
+        row = np.asarray(row, dtype='i4')
+        return _rows.row_mask(self, row)
+
     def row_extent(self, row):
         """
         Get the extent of a row in the underlying column index and value arrays.

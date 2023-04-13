@@ -54,6 +54,10 @@ def _row_array_vals(csr, row):
 
 
 def _row_array_ones(csr, row):
+    return _row_array(csr, row, _fill_ones, np.float32)
+
+
+def _row_array_mask(csr, row):
     return _row_array(csr, row, _fill_ones, np.bool_)
 
 
@@ -62,6 +66,10 @@ def _mr_matrix_vals(csr, row):
 
 
 def _mr_matrix_ones(csr, row):
+    return _mr_matrix(csr, row, _fill_ones, np.float32)
+
+
+def _mr_matrix_mask(csr, row):
     return _mr_matrix(csr, row, _fill_ones, np.bool_)
 
 
@@ -77,6 +85,14 @@ def row_array(csr, row):
             return _mr_matrix_vals(csr, row)
         else:
             return _mr_matrix_ones(csr, row)
+
+
+def row_mask(csr, row):
+    "Get a row of the CSR as an array"
+    if row.shape == ():
+        return _row_array_mask(csr, row)
+    else:
+        return _mr_matrix_mask(csr, row)
 
 
 def cs(csr, row):
