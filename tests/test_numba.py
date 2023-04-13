@@ -68,12 +68,27 @@ def _row(csr, row):
 
 @given(csrs())
 def test_csr_row(csr):
-
     for i in range(csr.nrows):
         cr = csr.row(i)
         nr = _row(csr, i)
         assert nr.shape == cr.shape
         assert all(nr == cr)
+
+
+@njit
+def _rows(csr, rows):
+    return csr.row(rows)
+
+
+@given(st.data(), csrs())
+def test_csr_rows(data, csr):
+    rows = data.draw(st.lists(st.integers(0, csr.nrows - 1), unique=True))
+    rows = np.asarray(rows, dtype='i4')
+    cmat = csr.row(rows)
+    nmat = _rows(csr, rows)
+
+    assert nmat.shape == cmat.shape
+    assert np.all(nmat == cmat)
 
 
 @njit

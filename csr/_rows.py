@@ -3,6 +3,7 @@ Implementations of CSR row access functions.
 """
 
 import numpy as np
+from numba import njit
 
 
 def extent(csr, row):
@@ -12,18 +13,21 @@ def extent(csr, row):
     return sp, ep
 
 
+@njit
 def _fill_vals(csr, row, array):
     sp, ep = csr.row_extent(row)
     cols = csr.colinds[sp:ep]
     array[cols] = csr.values[sp:ep]
 
 
+@njit
 def _fill_ones(csr, row, array):
     sp, ep = csr.row_extent(row)
     cols = csr.colinds[sp:ep]
     array[cols] = 1
 
 
+@njit
 def _row_array(csr, row, fill, dtype):
     v = np.zeros(csr.ncols, dtype=dtype)
     if csr.nnz == 0:
@@ -33,6 +37,7 @@ def _row_array(csr, row, fill, dtype):
     return v
 
 
+@njit
 def _mr_matrix(csr, rows, fill, dtype):
     v = np.zeros(rows.shape + (csr.ncols,), dtype=dtype)
     if csr.nnz == 0:
@@ -49,7 +54,7 @@ def _row_array_vals(csr, row):
 
 
 def _row_array_ones(csr, row):
-    return _row_array(csr, row, _fill_ones, None)
+    return _row_array(csr, row, _fill_ones, np.bool_)
 
 
 def _mr_matrix_vals(csr, row):
@@ -57,7 +62,7 @@ def _mr_matrix_vals(csr, row):
 
 
 def _mr_matrix_ones(csr, row):
-    return _mr_matrix(csr, row, _fill_ones, None)
+    return _mr_matrix(csr, row, _fill_ones, np.bool_)
 
 
 def row_array(csr, row):
