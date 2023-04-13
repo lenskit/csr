@@ -372,9 +372,7 @@ class CSR(_csr_base):
 
     def row(self, row):
         """
-        Return a row of this matrix as a dense ndarray.
-
-        .. note:: This method only supports single indices in Numba mode.
+        Return one or more rows of this matrix as a dense ndarray.
 
         Args:
             row(int or numpy.ndarray): the row index or indices.
