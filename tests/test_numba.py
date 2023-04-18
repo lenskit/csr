@@ -83,12 +83,34 @@ def _rows(csr, rows):
 @given(st.data(), csrs())
 def test_csr_rows(data, csr):
     rows = data.draw(st.lists(st.integers(0, csr.nrows - 1), unique=True))
-    rows = np.asarray(rows, dtype='i4')
+    rows = np.asarray(rows, dtype=np.int32)
     cmat = csr.row(rows)
     nmat = _rows(csr, rows)
 
     assert nmat.shape == cmat.shape
     assert np.all(nmat == cmat)
+
+
+@njit
+def _row_mask(csr, rows):
+    return csr.row_mask(rows)
+
+
+@given(st.data(), csrs())
+def test_csr_row_mask(data, csr):
+    csr = data.draw(csrs(st.integers(1, 100), st.integers(1, 100)))
+
+    row_id = st.integers(0, csr.nrows - 1)
+    row_list = st.lists(row_id, unique=True)
+    rows = data.draw(st.one_of(row_id, row_list))
+    if isinstance(rows, list):
+        rows = np.asarray(rows, dtype=np.int32)
+
+    nr_mask = _row_mask(csr, rows)
+    assert nr_mask.dtype == np.bool_
+    cr_mask = csr.row_mask(rows)
+    assert nr_mask.shape == cr_mask.shape
+    assert np.all(nr_mask == cr_mask)
 
 
 @njit

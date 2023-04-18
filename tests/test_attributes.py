@@ -82,13 +82,53 @@ def test_csr_row(csr):
 
 @csr_slow()
 @given(st.data(), csrs(st.integers(1, 100), st.integers(1, 100)))
-def test_csr_rows(data, csr):
+def test_csr_multi_rows(data, csr):
     smat = csr.to_scipy()
 
     rows = data.draw(st.lists(st.integers(0, csr.nrows - 1), max_size=csr.nrows, unique=True))
     row_arrs = csr.row(rows)
     other = smat[rows, :].toarray()
     assert np.all(row_arrs == other)
+
+
+@csr_slow()
+@given(st.data())
+def test_csr_rows(data):
+    "Test the row() method - row and multi_rows in one test (to demonstrate feasibility)"
+    csr = data.draw(csrs(st.integers(1, 100), st.integers(1, 100)))
+    smat = csr.to_scipy()
+
+    row_id = st.integers(0, csr.nrows - 1)
+    row_list = st.lists(row_id, max_size=csr.nrows, unique=True)
+    rows = data.draw(st.one_of(row_id, row_list))
+
+    row_arrs = csr.row(rows)
+    other = smat[rows, :].toarray()
+    assert np.all(row_arrs == other)
+
+
+@csr_slow()
+@given(st.data())
+def test_csr_row_mask(data):
+    csr = data.draw(csrs(st.integers(1, 100), st.integers(1, 100)))
+
+    row_id = st.integers(0, csr.nrows - 1)
+    row_list = st.lists(row_id, max_size=csr.nrows, unique=True)
+    rows = data.draw(st.one_of(row_id, row_list))
+
+    row_arrs = csr.row_mask(rows)
+    assert row_arrs.dtype == np.bool_
+    if isinstance(rows, list):
+        assert row_arrs.shape == (len(rows), csr.ncols)
+        for i, row in enumerate(rows):
+            sp, ep = csr.row_extent(row)
+            assert np.all(row_arrs[i, csr.row_cs(row)])
+            assert np.sum(row_arrs[i, :]) == ep - sp
+    else:
+        assert row_arrs.shape == (csr.ncols,)
+        sp, ep = csr.row_extent(rows)
+        assert np.all(row_arrs[csr.row_cs(rows)])
+        assert np.sum(row_arrs) == ep - sp
 
 
 def test_csr_sparse_row():

@@ -36,6 +36,14 @@ def _csr_row(csr, row):
             return _rows._mr_matrix_ones
 
 
+@overload_method(CSRType, 'row_mask')
+def _csr_row_mask(csr, row):
+    if isinstance(row, types.Integer):
+        return _rows._row_array_mask
+    elif isinstance(row, types.ArrayCompatible):
+        return _rows._mr_matrix_mask
+
+
 @overload_method(CSRType, 'row_cs')
 def _csr_row_cs(csr, row):
     return _rows.cs
