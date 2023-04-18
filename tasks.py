@@ -26,6 +26,7 @@ def clean(c):
         print('removing', f, file=sys.stderr)
         f.unlink(True)
 
+
 @task
 def build_mkl(c, trace=False):
     "Build the Intel MKL helper module."
