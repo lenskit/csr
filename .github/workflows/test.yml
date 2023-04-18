@@ -17,6 +17,25 @@ defaults:
     shell: bash -l {0}
 
 jobs:
+  static-qa:
+    name: Static QA checks
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      - name: 👢 Set up Conda environment
+        uses: lenskit/lkbuild/actions/setup-conda-env@main
+        id: setup
+        with:
+          activate-environment: csr
+          python-version: "3.10"
+
+      - name: 🪲 Run Flake8 QA checks
+        uses: TrueBrain/actions-flake8@v2
+
   test-conda:
     name: Test with Conda Python ${{matrix.python}} on ${{matrix.platform}}
     runs-on: ${{matrix.platform}}-latest
