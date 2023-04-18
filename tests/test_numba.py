@@ -107,6 +107,7 @@ def test_csr_row_mask(data, csr):
         rows = np.asarray(rows, dtype=np.int32)
 
     nr_mask = _row_mask(csr, rows)
+    assert nr_mask.dtype == np.bool_
     cr_mask = csr.row_mask(rows)
     assert nr_mask.shape == cr_mask.shape
     assert np.all(nr_mask == cr_mask)

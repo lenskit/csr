@@ -117,6 +117,7 @@ def test_csr_row_mask(data):
     rows = data.draw(st.one_of(row_id, row_list))
 
     row_arrs = csr.row_mask(rows)
+    assert row_arrs.dtype == np.bool_
     if isinstance(rows, list):
         assert row_arrs.shape == (len(rows), csr.ncols)
         for i, row in enumerate(rows):
