@@ -171,7 +171,7 @@ def sort_rows(csr):
 
 
 @njit(nogil=True)
-def _transpose_values(csr):
+def _transpose_values(csr):  # NOQA: C901
     "Transpose a CSR with its values."
     brp = np.zeros(csr.ncols + 1, csr.rowptrs.dtype)
     bci = np.zeros(csr.nnz, np.int32)
@@ -206,7 +206,7 @@ def _transpose_values(csr):
 
 
 @njit(nogil=True)
-def _transpose_structure(csr):
+def _transpose_structure(csr):  # NOQA: C901
     "Transpose a CSR, structure-only."
     brp = np.zeros(csr.ncols + 1, csr.rowptrs.dtype)
     bci = np.zeros(csr.nnz, np.int32)
