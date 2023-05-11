@@ -28,7 +28,6 @@ jobs:
         - windows
         - ubuntu
         python:
-        - "3.7"
         - "3.8"
         - "3.9"
         - "3.10"
@@ -84,7 +83,6 @@ jobs:
       fail-fast: false
       matrix:
         python:
-        - "3.7"
         - "3.8"
         - "3.9"
         - "3.10"
@@ -131,7 +129,7 @@ jobs:
       - name: Set up Python and environment
         uses: lenskit/lkbuild/actions/setup-vanilla-env@main
         with:
-          python-version: "3.7"
+          python-version: "3.8"
           include-dev-dependencies: false
           extras: test
           constraints-file: min-constraints.txt

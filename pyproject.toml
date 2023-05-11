@@ -12,10 +12,10 @@ description = "Compressed Sparse Row matrices for Python, with Numba API."
 readme = "README.md"
 license = { file = "LICENSE" }
 dynamic = ['version']
-requires-python = ">= 3.7"
+requires-python = ">= 3.8"
 dependencies = [
     "numba >=0.51,<0.57",
-    "numpy >=1.17",
+    "numpy >=1.21",
     "scipy >=1.2,<2"
 ]
 
