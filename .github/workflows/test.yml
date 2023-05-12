@@ -31,9 +31,10 @@ jobs:
         - "3.8"
         - "3.9"
         - "3.10"
+        # - "3.11"
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
       with:
         fetch-depth: 0
 
@@ -66,14 +67,10 @@ jobs:
     - name: Aggregate coverage data
       run: coverage xml
 
-    - name: Upload logs
-      uses: actions/upload-artifact@v2
+    - name: Save test results
+      uses: lenskit/lkbuild/actions/save-test-results@main
       with:
-        name: log-conda-${{matrix.platform}}-py${{matrix.python}}
-        path: |
-          test*.log
-          coverage.xml
-          emissions.csv
+        artifact-name: test-conda-${{matrix.platform}}-py${{matrix.python}}
 
   test-vanilla:
     name: Test w/ Vanilla Python ${{matrix.python}} on ${{matrix.platform}}
@@ -86,12 +83,13 @@ jobs:
         - "3.8"
         - "3.9"
         - "3.10"
+        - "3.11"
         platform:
         - windows
         - ubuntu
     steps:
       - name: Check out source
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           fetch-depth: 0
 
@@ -104,17 +102,10 @@ jobs:
         run: |
           python -m pytest --cov=csr --cov-report=xml --log-file=test.log
 
-      - name: Aggreagate Coverage Data
-        run: coverage xml
-
-      - name: Upload logs
-        uses: actions/upload-artifact@v2
+      - name: Save test results
+        uses: lenskit/lkbuild/actions/save-test-results@main
         with:
-          name: log-vanilla-${{matrix.platform}}-py${{matrix.python}}
-          path: |
-            test*.log
-            coverage.xml
-            emissions.csv
+          artifact-name: test-vanilla-${{matrix.platform}}-py${{matrix.python}}
 
   test-mindeps:
     name: Test w/ Oldest Deps
@@ -122,7 +113,7 @@ jobs:
     timeout-minutes: 30
     steps:
       - name: Check out source
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           fetch-depth: 0
 
@@ -144,17 +135,11 @@ jobs:
         env:
           NUMBA_DISABLE_JIT: 1
 
-      - name: Aggreagate Coverage Data
-        run: coverage xml
-
-      - name: Upload logs
-        uses: actions/upload-artifact@v2
+      - name: Save test results
+        uses: lenskit/lkbuild/actions/save-test-results@main
         with:
-          name: log-vanilla-${{matrix.platform}}-py${{matrix.python}}
-          path: |
-            test*.log
-            coverage.xml
-            emissions.csv
+          artifact-name: test-mindeps
+
 
   process-tests:
     name: Process Test Results
@@ -162,35 +147,19 @@ jobs:
     needs: [test-conda, test-vanilla, test-mindeps]
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
       with:
         fetch-depth: 0
 
-    - name: Download test results
-      uses: actions/download-artifact@v2
-      with:
-        path: test-logs
-
-    - name: List log files
-      run: ls -lR test-logs
-
-    - name: Upload test coverage
-      uses: codecov/codecov-action@v2
-      with:
-        directory: test-logs/
-
-    - name: Upload all test data
-      uses: actions/upload-artifact@v2
-      with:
-        name: test-outputs
-        path: test-logs
+    - name: Process test reports
+      uses: lenskit/lkbuild/actions/report-test-results@main
 
   package:
     name: Package and Publish
     runs-on: ubuntu-latest
     needs: [process-tests]
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
       with:
         fetch-depth: 0
 
@@ -198,7 +167,7 @@ jobs:
       run: git fetch --tags
 
     - name: Set up Python
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v4
       with:
         python-version: "3.10"
 
@@ -209,7 +178,7 @@ jobs:
       run: flit build
 
     - name: Save distribution archive
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with:
         name: pypi-pkgs
         path: dist
