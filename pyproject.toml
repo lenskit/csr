@@ -38,7 +38,7 @@ test = [
 ]
 dev = [
     "flit >=3.2,<4",
-    "lenskit-build-helpers >=0.1",
+    "lenskit-build-helpers >=0.3",
     "keyring",
     "flake8",
     "rstcheck",
