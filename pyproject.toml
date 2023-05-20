@@ -38,11 +38,10 @@ test = [
 ]
 dev = [
     "flit >=3.2,<4",
+    "lenskit-build-helpers >=0.1",
     "keyring",
     "flake8",
     "rstcheck",
-    "invoke",
-    "lenskit-build-helpers >=0.1",
     "sphinx-autobuild >=2021",
 ]
 doc = [
