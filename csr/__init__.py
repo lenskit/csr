@@ -2,7 +2,7 @@
 Compressed Sparse Row matrices for Python, with Numba API.
 """
 
-__version__ = "0.5.0a1"
+__version__ = "0.5.0a2"
 __all__ = [
     'CSR'
 ]
