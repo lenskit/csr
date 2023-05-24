@@ -33,7 +33,7 @@ test = [
     "pytest-doctestplus >=0.9",
     "pytest-benchmark >=3",
     "pytest-cov >=2.12",
-    "hypothesis ~=6.30",
+    "hypothesis >=6.30,<7",
     "psutil >=5"
 ]
 dev = [
