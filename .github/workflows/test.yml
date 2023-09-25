@@ -98,6 +98,10 @@ jobs:
         with:
           python-version: ${{matrix.python}}
 
+      - name: 🔎 Inspect environment
+        run: |
+          numba -s
+
       - name: Run tests
         run: |
           python -m pytest --cov=csr --cov-report=xml --log-file=test.log
@@ -124,6 +128,10 @@ jobs:
           include-dev-dependencies: false
           extras: test
           constraints-file: min-constraints.txt
+
+      - name: 🔎 Inspect environment
+        run: |
+          numba -s
 
       - name: Run tests
         run: |
