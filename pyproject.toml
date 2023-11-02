@@ -81,7 +81,7 @@ python = ["3.8", "3.9", "3.10", "3.11"]
 default_envs = ["doc"]
 
 [tool.pyproject2conda.envs.ci]
-extras = ["dev", "test"]
+extras = ["dev", "test", "mkl"]
 deps = [
     "mkl-devel",
     "mkl",
@@ -94,7 +94,7 @@ deps = [
 extras = ["dev", "test", "doc"]
 
 [tool.pyproject2conda.envs."dev-mkl"]
-extras = ["dev", "test", "doc"]
+extras = ["dev", "test", "doc", "mkl"]
 deps = [
     "mkl-devel",
     "mkl",
