@@ -21,5 +21,7 @@ bench*.json
 _*.c
 *.ipynb
 cov*.xml
+environment.yml
+environment*.yaml
 *.lock
 *.lock.yml
