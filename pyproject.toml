@@ -74,8 +74,11 @@ channels = [
 
 [tool.pyproject2conda]
 style = "yaml"
+template_python = "envs/py{py_version}-{env}"
 template = "environment.{env}"
 channels = ["conda-forge"]
+python = ["3.8", "3.9", "3.10", "3.11"]
+default_envs = ["doc"]
 
 [tool.pyproject2conda.envs.ci]
 extras = ["dev", "test"]
@@ -99,3 +102,7 @@ deps = [
     "libblas=*=*mkl",
     "c-compiler",
 ]
+
+[[tool.pyproject2conda.overrides]]
+envs = ["doc"]
+python = ["3.11"]

@@ -39,12 +39,11 @@ jobs:
         fetch-depth: 0
 
     - name: 👢 Set up Conda environment
-      uses: lenskit/lkbuild/actions/setup-conda-env@main
+      uses: mamba-org/setup-micromamba@v1
       id: setup
       with:
-        activate-environment: csr
-        python-version: ${{matrix.python}}
-        mixin: mkl-devel.yml
+        environment-name: csr
+        environment-file: envs/py${{matrix.python}}-ci.yaml
 
     - name: 🔎 Inspect environment
       run: |
