@@ -66,6 +66,9 @@ exclude = [
     "*.ipynb"
 ]
 
+[tool.setuptools.packages.find]
+include = ["csr/*"]
+
 [tool.conda-lock]
 channels = [
     "conda-forge",
