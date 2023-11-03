@@ -29,6 +29,7 @@ source = "https://github.com/lenskit/csr"
 
 [project.optional-dependencies]
 test = [
+    "lenskit-build-helpers >=0.3",  # p2c: -p
     "pytest ==7.*",
     "pytest-doctestplus >=0.9",
     "pytest-benchmark >=3",
@@ -38,7 +39,7 @@ test = [
 ]
 dev = [
     "flit >=3.2,<4",
-    "lenskit-build-helpers >=0.3",
+    "lenskit-build-helpers >=0.3",  # p2c: -p
     "keyring",
     "flake8",
     "rstcheck",
@@ -52,7 +53,7 @@ profile = [
     "notebook",
     "seaborn",
     "jupytext",
-    "pandas >=1.0"
+    "pandas >=1.0,<2"
 ]
 mkl = [
     "cffi"
@@ -65,8 +66,46 @@ exclude = [
     "*.ipynb"
 ]
 
+[tool.setuptools.packages.find]
+include = ["csr/*"]
+
 [tool.conda-lock]
 channels = [
     "conda-forge",
     "lenskit",
 ]
+
+[tool.pyproject2conda]
+style = "yaml"
+template_python = "envs/py{py_version}-{env}"
+template = "environment.{env}"
+channels = ["conda-forge"]
+python = ["3.8", "3.9", "3.10", "3.11"]
+default_envs = ["doc"]
+
+[tool.pyproject2conda.envs.ci]
+extras = ["dev", "test", "mkl"]
+deps = [
+    "mkl-devel",
+    "mkl",
+    "tbb",
+    "libblas=*=*mkl",
+    "c-compiler",
+]
+
+[tool.pyproject2conda.envs.dev]
+extras = ["dev", "test", "doc"]
+
+[tool.pyproject2conda.envs."dev-mkl"]
+extras = ["dev", "test", "doc", "mkl"]
+deps = [
+    "mkl-devel",
+    "mkl",
+    "tbb",
+    "libblas=*=*mkl",
+    "c-compiler",
+]
+
+[[tool.pyproject2conda.overrides]]
+envs = ["doc"]
+python = ["3.11"]
