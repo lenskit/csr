@@ -16,28 +16,30 @@ from . import _struct, _rows
 INTC = np.iinfo(np.intc)
 _log = logging.getLogger(__name__)
 
+
 # ugly hack for a bug on Numba < 0.53
+class _csr_base_compat:
+    def __init__(self, nrows, ncols, nnz, ptrs, inds, vals, _cast=True):
+        self.nrows = nrows
+        self.ncols = ncols
+        self.nnz = nnz
+        if _cast and np.max(ptrs, initial=0) <= INTC.max:
+            self.rowptrs = np.require(ptrs, np.intc, 'C')
+        else:
+            self.rowptrs = np.require(ptrs, requirements='C')
+        self.colinds = np.require(inds, np.intc, 'C')
+        if vals is not None:
+            self._values = np.require(vals, requirements='C')
+        else:
+            self._values = None
+
+    def _numba_box_(self, *args):
+        raise NotImplementedError()
+
+
 if config.DISABLE_JIT:
-    class _csr_base:
-        def __init__(self, nrows, ncols, nnz, ptrs, inds, vals, _cast=True):
-            self.nrows = nrows
-            self.ncols = ncols
-            self.nnz = nnz
-            if _cast and np.max(ptrs, initial=0) <= INTC.max:
-                self.rowptrs = np.require(ptrs, np.intc, 'C')
-            else:
-                self.rowptrs = np.require(ptrs, requirements='C')
-            self.colinds = np.require(inds, np.intc, 'C')
-            if vals is not None:
-                self._values = np.require(vals, requirements='C')
-            else:
-                self._values = None
-
-        def _numba_box_(self, *args):
-            raise NotImplementedError()
-
+    _csr_base = _csr_base_compat
     NUMBA_ENABLED = False
-
 else:
     _csr_base = structref.StructRefProxy
     NUMBA_ENABLED = True
@@ -278,23 +280,19 @@ class CSR(_csr_base):
             CSR: the transformed CSR matrix.
         """
 
+        rps = self.rowptrs
         if ptr_dtype:
             info = np.iinfo(ptr_dtype)
             if self.nnz > info.max:
                 raise ValueError(f'type {ptr_dtype} cannot address {self.nnz} entries')
-            rps = np.require(self.rowptrs, ptr_dtype)
-        else:
-            rps = self.rowptrs
+            rps = np.require(rps, ptr_dtype)
 
+        vs = None if val_dtype is False else self.values
         if val_dtype:
-            if self.values is None:
+            if vs is None:
                 vs = np.ones(self.nnz, val_dtype)
             else:
                 vs = np.require(self.values, val_dtype)
-        elif val_dtype is False:
-            vs = None
-        else:
-            vs = self.values
 
         return CSR(self.nrows, self.ncols, self.nnz, rps, self.colinds, vs, _cast=False)
 

@@ -1,7 +1,7 @@
-import sys
+# flake8: noqa
+# this file is a mess for QA
 from typing import Optional
 import dataclasses
-from numba.core.types.functions import _ResolutionFailures
 import numpy as np
 from numba import njit, config
 from numba.extending import overload

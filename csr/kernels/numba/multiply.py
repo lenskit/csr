@@ -58,7 +58,7 @@ def mult_abt(a_h, b_h):
 
 
 @njit
-def _sym_mm(a_h, b_h, c_rp):
+def _sym_mm(a_h, b_h, c_rp):  # noqa: C901
     wlen = max(a_h.nrows, a_h.ncols, b_h.ncols)
     index = np.full(wlen, -1, np.intc)
     c_len = max(a_h.nnz, b_h.nnz)

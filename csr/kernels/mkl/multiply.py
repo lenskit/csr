@@ -1,7 +1,7 @@
 import numpy as np
 from numba import njit
 
-from ._api import *  # noqa: F403
+from ._api import ffi, lk_mkl_spmab, lk_mkl_spmabt, lk_mkl_spmv
 from .handle import mkl_h
 
 __all__ = [
