@@ -57,7 +57,7 @@ jobs:
       with:
         environment-file: environment.yml
         environment-name: csr
-        init-shell: true
+        init-shell: bash
 
     - name: 🔎 Inspect environment
       run: |
