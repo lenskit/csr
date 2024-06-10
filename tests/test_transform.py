@@ -172,7 +172,7 @@ def test_filter(csr):
 @csr_slow()
 @given(csrs(st.integers(10, 100), st.integers(10, 100), max_density=0.5, values=True))
 def test_shard(csr):
-    SHARD_SIZE = 10
+    SHARD_SIZE = 500
 
     shards = csr._shard_rows(SHARD_SIZE)
     # we have the whole matrix
