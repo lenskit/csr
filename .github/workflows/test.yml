@@ -38,19 +38,33 @@ jobs:
       with:
         fetch-depth: 0
 
+    - name: Create Conda environment file
+      run: |
+        ct_opts="-p $PYVER -e test"
+        ct_args="pyproject.toml"
+        plat=$(uname -m)
+        if [ "$plat" != arm64 ]; then
+          ct_opts="$ct_opts -e mkl"
+          ct_args="$ct_args mkl-devel.yml"
+        fi
+        pipx run ./utils/conda-tool.py --env -o environment.yml $ct_opts $ct_args
+      env:
+        PYVER: ${{matrix.python}}
+
     - name: 👢 Set up Conda environment
-      uses: lenskit/lkbuild/actions/setup-conda-env@main
+      uses: mamba-org/setup-micromamba@v1
       id: setup
       with:
-        activate-environment: csr
-        python-version: ${{matrix.python}}
-        mixin: mkl-devel.yml
+        environment-file: environment.yml
+        environment-name: csr
+        init-shell: true
 
     - name: 🔎 Inspect environment
       run: |
         numba -s
 
     - name: 🛠 Compile MKL helper
+      if: matrix.platform != 'macos'
       run: |
         invoke build-mkl
 
