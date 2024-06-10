@@ -44,7 +44,7 @@ jobs:
         ct_args="pyproject.toml"
         plat=$(uname -m)
         if [ "$plat" != arm64 ]; then
-          ct_opts="$ct_opts -e mkl"
+          ct_opts="$ct_opts -e dev -e mkl"
           ct_args="$ct_args mkl-devel.yml"
         fi
         pipx run ./utils/conda-tool.py --env -o environment.yml $ct_opts $ct_args
