@@ -43,6 +43,7 @@ dev = [
     "tomlkit",
     "keyring",
     "docopt>=0.6",
+    "invoke",
     "flake8",
     "rstcheck",
     "sphinx-autobuild >=2021",

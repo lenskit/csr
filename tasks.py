@@ -4,13 +4,7 @@ import warnings
 from shutil import rmtree
 from pathlib import Path
 from cffi import FFI
-
 from invoke import task
-try:
-    from lkbuild.tasks import *  # NOQA: F403, F401
-except ImportError:
-    warnings.warn('lkbuild tasks not available')
-
 
 @task
 def clean(c):
