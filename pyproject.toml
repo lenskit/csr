@@ -39,7 +39,10 @@ test = [
 dev = [
     "flit >=3.2,<4",
     "lenskit-build-helpers >=0.3",
+    "packaging",
+    "tomlkit",
     "keyring",
+    "docopt>=0.6",
     "flake8",
     "rstcheck",
     "sphinx-autobuild >=2021",
