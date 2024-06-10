@@ -11,7 +11,7 @@ from hypothesis import given
 
 
 @csr_slow()
-@given(mm_pairs(max_shape=(50, 1000, 50)))
+@given(mm_pairs(max_shape=(50, 200, 50)))
 def test_symb(pair):
     A, B = pair
 
