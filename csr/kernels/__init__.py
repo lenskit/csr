@@ -97,7 +97,7 @@ def get_kernel(name=None):
     return kern
 
 
-def _initialize(name=None):
+def _initialize(name=None):  # NOQA: C901
     global __cached_default
     if __cached_default:
         warnings.warn('default kernel already initialized')

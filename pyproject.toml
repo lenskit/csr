@@ -55,7 +55,7 @@ profile = [
     "notebook",
     "seaborn",
     "jupytext",
-    "pandas >=1.0"
+    "pandas >=1.0",
 ]
 mkl = [
     "cffi"

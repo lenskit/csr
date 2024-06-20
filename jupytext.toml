@@ -1,2 +1,2 @@
-formats = ["ipynb", "py:percent"]
+formats = ["ipynb", "myst"]
 cell_metadata_filter = "-papermill"

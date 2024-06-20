@@ -8,6 +8,7 @@ from .csr import CSR
 from . import _util
 from .constructors import create, create_novalues
 
+
 @njit(nogil=True)
 def _from_coo_structure(nrows, rows, cols):
     "Transform COO structure into CSR structure"
@@ -170,7 +171,7 @@ def sort_rows(csr):
 
 
 @njit(nogil=True)
-def _transpose_values(csr):
+def _transpose_values(csr):  # NOQA: C901
     "Transpose a CSR with its values."
     brp = np.zeros(csr.ncols + 1, csr.rowptrs.dtype)
     bci = np.zeros(csr.nnz, np.int32)
@@ -185,7 +186,7 @@ def _transpose_values(csr):
 
     # convert to pointers
     for j in range(csr.ncols):
-        brp[j+1] = brp[j] + brp[j+1]
+        brp[j + 1] = brp[j] + brp[j + 1]
 
     # construct results
     for i in range(csr.nrows):
@@ -205,7 +206,7 @@ def _transpose_values(csr):
 
 
 @njit(nogil=True)
-def _transpose_structure(csr):
+def _transpose_structure(csr):  # NOQA: C901
     "Transpose a CSR, structure-only."
     brp = np.zeros(csr.ncols + 1, csr.rowptrs.dtype)
     bci = np.zeros(csr.nnz, np.int32)
@@ -219,7 +220,7 @@ def _transpose_structure(csr):
 
     # convert to pointers
     for j in range(csr.ncols):
-        brp[j + 1] = brp[j] + brp[j+1]
+        brp[j + 1] = brp[j] + brp[j + 1]
 
     # construct results
     for i in range(csr.nrows):
